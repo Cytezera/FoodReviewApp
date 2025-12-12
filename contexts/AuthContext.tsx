@@ -1,45 +1,46 @@
-import { loginUser } from "@/services/authService";
-import pb from "@/services/pocketbase";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, use, type PropsWithChildren } from 'react';
 
-const AuthContext = createContext(null);
+import { useStorageState } from '@/hooks/useStorageState';
 
-export const AuthProvider = ({ children } : {children: ReactNode}) => {
-    const [user, setUser ] = useState(null)
-    const [loading, setLoading] = useState(true);
-    useEffect(() => {
-        const load = async() => {
-            const token = await AsyncStorage.getItem('pb_token');
-            if (token) {
-                pb.authStore.save(token,{});
-                setUser(pb.authStore.model);
-            }
-        }
-        load();
-    },[])
+const AuthContext = createContext<{
+  signIn: () => void;
+  signOut: () => void;
+  session?: string | null;
+  isLoading: boolean;
+}>({
+  signIn: () => null,
+  signOut: () => null,
+  session: null,
+  isLoading: false,
+});
 
-    const login = async (email:string, password:string) => {
-        const auth = await loginUser(email,password);
-        if (auth.success){
-            setUser(auth.user.authRecord)
-            return true 
-        }
-        return false 
-    }
-    const logout = async () => {
-        await AsyncStorage.removeItem('pb_token');
-        pb.authStore.clear()
-        setUser(null);
-    }
+// Use this hook to access the user info.
+export function useSession() {
+  const value = use(AuthContext);
+  if (!value) {
+    throw new Error('useSession must be wrapped in a <SessionProvider />');
+  }
 
-    return(
-        <AuthContext.Provider value={{ user, login, logout }}>
-            {children}
-        </AuthContext.Provider> 
-    )
-
+  return value;
 }
-export function useAuth() {
-    return useContext(AuthContext);
+
+export function SessionProvider({ children }: PropsWithChildren) {
+  const [[isLoading, session], setSession] = useStorageState('session');
+
+  return (
+    <AuthContext.Provider
+      value={{
+        signIn: () => {
+          // Perform sign-in logic here
+          setSession('xxx');
+        },
+        signOut: () => {
+          setSession(null);
+        },
+        session,
+        isLoading,
+      }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
