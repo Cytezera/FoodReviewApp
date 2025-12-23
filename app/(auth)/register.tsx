@@ -6,6 +6,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Register() {
   const { signIn } = useSession();
@@ -15,7 +16,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [nationality, setNationality] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
-  const [isDatePickerVisible, setIsDatePickerVisible] = useState(true);
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -50,8 +51,7 @@ export default function Register() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) return;
-
-    const result = await registerAccount(registerFormData);
+     const result = await registerAccount(registerFormData);
 
     if (!result.success) {
       const pbError: { [key:stinrg ]: string }  = {} ;
@@ -68,7 +68,8 @@ export default function Register() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <SafeAreaView style={{ flex:8 }}>
+          <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Create Account</Text>
       <Text style={styles.subtitle}>Sign up to get started</Text>
 
@@ -147,7 +148,8 @@ export default function Register() {
           onPress={() => router.push("/sign-in")}
         />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
