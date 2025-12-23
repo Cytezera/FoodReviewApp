@@ -1,30 +1,33 @@
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, ViewStyle, TextStyle } from "react-native";
 
-export function Button({
-  title,
-  onPress,
-  variant = "primary",
-  style,
-  textStyle,
-}) {
+type ButtonProps = {
+  title?: string;
+  onPress: () => void;
+  variant?: "primary" | "secondary";
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+  children?: React.ReactNode; // <-- allow icon or custom content
+};
+
+export function Button({ title, onPress, variant = "primary", style, textStyle, children }: ButtonProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[
-        styles.button,
-        variant === "secondary" && styles.secondary,
-        style,
-      ]}
+      style={[styles.button, variant === "secondary" && styles.secondary, style]}
     >
-      <Text
-        style={[
-          styles.text,
-          variant === "secondary" && styles.secondaryText,
-          textStyle,
-        ]}
-      >
-        {title}
-      </Text>
+      {children ? (
+        children
+      ) : (
+        <Text
+          style={[
+            styles.text,
+            variant === "secondary" && styles.secondaryText,
+            textStyle,
+          ]}
+        >
+          {title}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }
@@ -35,6 +38,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: "center",
+    justifyContent: "center",
   },
   secondary: {
     backgroundColor: "#f2f2f2",

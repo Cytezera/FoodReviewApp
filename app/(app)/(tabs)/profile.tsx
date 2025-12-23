@@ -1,77 +1,180 @@
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, Text, View, StyleSheet } from "react-native";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { IconSymbol  } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme"
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useSession } from "@/contexts/AuthContext";
+import { Loading } from "@/components/ui/Loading"
 
 export default function ProfileScreen() {
+  const { user , session , isLoading } = useSession()
+  const colorScheme = useColorScheme() ?? "light";
+  const theme = Colors[colorScheme];
+
+  if (isLoading){
+    return <Loading/>
+  }
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
-        <Image
-          source={{ uri: "https://via.placeholder.com/100" }} // placeholder image
-          style={styles.profileImage}
-        />
-        <Text style={styles.name}>John Doe</Text>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
+        {/* Top Row */}
+        <View style={styles.topRow}>
+          <Button variant="secondary" onPress={() => {}} style={{ backgroundColor: theme.secondaryBackground }}>
+            <IconSymbol name="settings" size={24} color={theme.text} />
+          </Button>
+          <Button variant="secondary" onPress={() => {}} style={{ backgroundColor: theme.secondaryBackground }}>
+            <IconSymbol name="notifications" size={24} color={theme.text} />
+          </Button>
+        </View>
 
-      {/* Buttons */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Badges</Text>
-        </TouchableOpacity>
+        {/* Profile Row */}
+        <View style={[styles.profileRow, { backgroundColor: theme.cardBackground || "#fff" }]}>
+          <Image
+            source={{ uri: "https://via.placeholder.com/100" }}
+            style={styles.avatar}
+          />
+          <View style={styles.profileInfo}>
+            <Text style={[styles.name, { color: theme.text }]}>Test</Text>
+            <Text style={[styles.email, { color: theme.secondaryText || "#666" }]}>johndoe@example.com</Text>
+          </View>
+        </View>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Activity</Text>
-        </TouchableOpacity>
+        {/* Points Card */}
+<Card style={[styles.pointsCard, { backgroundColor: theme.cardBackground || "#fff" }]}>
+  {/* Top Row: Title, progress text, avatar */}
+  <View style={styles.cardTopRow}>
+    <View style={{ flex: 1 }}>
+      <Text style={[styles.cardTitle, { color: theme.text }]}>Gold Tier</Text>
+      <Text style={[styles.cardSubtitle, { color: theme.secondaryText || "#666" }]}>
+        300 points away to Platinum Tier
+      </Text>
+    </View>
+    <Image
+      source={{ uri: "https://via.placeholder.com/50" }}
+      style={styles.cardAvatar}
+    />
+  </View>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Settings</Text>
-        </TouchableOpacity>
+  {/* Progress Bar */}
+  <View style={styles.progressBarBackground}>
+    <View style={[styles.progressBarFill, { width: "70%", backgroundColor: theme.tint }]} />
+  </View>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Privacy</Text>
-        </TouchableOpacity>
+  {/* View Rewards */}
+  <Text style={[styles.viewRewards, { color: theme.tint }]}>View my rewards</Text>
+</Card>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Help Center</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        {/* Bottom placeholder */}
+        <View style={styles.bottomPlaceholder}>
+          <Text style={{ color: theme.secondaryText || "#aaa" }}>More features coming soon...</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: "#fff",
     padding: 24,
-    alignItems: "center",
+    gap: 24,
+    backgroundColor: "#f9f9f9",
+    flexGrow: 1,
   },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 12,
-    backgroundColor: "#ccc",
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: "600",
-  },
-  buttonContainer: {
-    width: "100%",
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
     gap: 12,
   },
-  button: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    backgroundColor: "#eee",
-    borderRadius: 8,
+  profileRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 16,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 16,
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "500",
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#ddd",
   },
+  profileInfo: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  email: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+  pointsCard: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  pointsText: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  bottomPlaceholder: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  pointsCard: {
+  padding: 16,
+  borderRadius: 16,
+  flexDirection: "column",
+  gap: 16,
+},
+
+cardTopRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+},
+
+cardTitle: {
+  fontSize: 18,
+  fontWeight: "600",
+},
+
+cardSubtitle: {
+  fontSize: 14,
+  marginTop: 4,
+},
+
+cardAvatar: {
+  width: 50,
+  height: 50,
+  borderRadius: 25,
+  backgroundColor: "#ddd",
+},
+
+progressBarBackground: {
+  width: "100%",
+  height: 10,
+  borderRadius: 5,
+  backgroundColor: "#eee",
+  overflow: "hidden",
+  marginTop: 8,
+},
+
+progressBarFill: {
+  height: "100%",
+  borderRadius: 5,
+},
+
+viewRewards: {
+  marginTop: 12,
+  fontWeight: "600",
+  fontSize: 14,
+  textAlign: "center",
+},
+
 });

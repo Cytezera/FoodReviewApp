@@ -8,24 +8,40 @@ import { Platform } from 'react-native';
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
+
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#11181C',               // primary text
+    secondaryText: '#687076',      // secondary / muted text
+    background: '#FFFFFF',         // main background
+    cardBackground: '#F9F9F9',     // cards / surfaces
+    tint: tintColorLight,          // primary accent / active color
+    icon: '#687076',               // default icon color
+    tabIconDefault: '#687076',     // inactive tab icon
+    tabIconSelected: tintColorLight, // active tab icon
+    border: '#E0E0E0',             // borders / dividers
+    buttonBackground: '#000000',   // primary button
+    buttonText: '#FFFFFF',         // primary button text
+    buttonSecondaryBackground: '#F2F2F2', // secondary button background
+    buttonSecondaryText: '#000000',       // secondary button text
   },
   dark: {
     text: '#ECEDEE',
+    secondaryText: '#9BA1A6',
     background: '#151718',
+    cardBackground: '#1E1F1F',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    border: '#2C2D2E',
+    buttonBackground: '#FFFFFF',
+    buttonText: '#000000',
+    buttonSecondaryBackground: '#2C2D2E',
+    buttonSecondaryText: '#FFFFFF',
   },
 };
+
 
 export const Fonts = Platform.select({
   ios: {
