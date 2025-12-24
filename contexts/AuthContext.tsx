@@ -1,4 +1,5 @@
 import { loginUser } from '@/services/authService';
+import { LoginCredential } from '@/types/user';
 
 import { User } from '@/types/user';
 import { createContext, useContext, useState, type PropsWithChildren } from 'react';
@@ -8,13 +9,13 @@ import { useStorageState } from '@/hooks/useStorageState';
 
 
 const AuthContext = createContext<{
-  signIn: (email: string, password: string ) => void;
+  signIn: (loginCredential: LoginCredential) => void;
   signOut: () => void;
   session?: string | null;
   user? : User | null;
   isLoading: boolean;
 }>({
-  signIn: (email: string , password: string ) => null,
+  signIn: (loginCredential: LoginCredential ) => null,
   signOut: () => null,
   session: null,
   user: null,
@@ -48,11 +49,17 @@ export function SessionProvider({ children }: PropsWithChildren) {
   return (
     <AuthContext.Provider
       value={{
-        signIn: async (email: string , password : string ) => {
-          const auth = await loginUser( email , password )
-          if (auth.success){
-            setSession(auth?.token);
-            setUser(auth?.user)
+        signIn: async (loginCredential: LoginCredential) => {
+          const result = await loginUser(loginCredential)
+          
+          if (result.success){
+            setSession(result.data.token);
+            setUser(result.data.user)
+            return  ({ success: true })
+          }
+          if (!result.success){
+            console.log(result.data.error)
+            return ({ success: false , error: result.data.error }) 
           }
           
         },

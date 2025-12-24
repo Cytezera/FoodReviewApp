@@ -1,9 +1,22 @@
-import pb from '@/services/pocketbase';
+import { LoginCredential } from "@/types/user"
+const API_URL = process.env.EXPO_PUBLIC_API_URL
 
-export const loginUser = async(email:string, password: string ) => {
+export const loginUser = async(loginCredential: LoginCredential ) => {
     try{
-        const authData = await pb.collection('users').authWithPassword(email,password);
-        return { success : true , user: authData.record , token: pb.authStore.token }
+        const res = await fetch(`${API_URL}/api/users/login`, {
+            method: 'POST',
+            headers:{
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(loginCredential)
+        })
+
+        const data = await res.json()
+        if(!res.ok){
+            return { success: false, data}
+        }
+        return { success: true , data }
+
     }catch (err){
         console.log("Login failed", err)
         return { success: false }
