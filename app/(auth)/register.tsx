@@ -6,7 +6,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Register() {
   const { signIn } = useSession();
@@ -33,7 +33,6 @@ export default function Register() {
       username,
       email,
       password,
-      confirmPassword,
       nationality,
       dateOfBirth,
     };
@@ -54,11 +53,13 @@ export default function Register() {
      const result = await registerAccount(registerFormData);
 
     if (!result.success) {
-      const pbError: { [key:stinrg ]: string }  = {} ;
-      for (const field in result.errors.data){
-        pbError[field] = result.errors.data[field].message
+      const expressErrors: { [key: string]: string } = {};
+      if(result.data.field){
+        const field = result.data.field
+       expressErrors[field] = result.data.error
       }
-      setErrors(pbError)
+
+      setErrors(expressErrors)
       return;
     }else{
       loginSession(email,password)

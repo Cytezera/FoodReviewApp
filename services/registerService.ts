@@ -11,7 +11,13 @@ export async function registerAccount(user: RegisterFormData) {
       body: JSON.stringify(user)
     })
 
-    return { success: true, res};
+    const data = await res.json()
+    if(!res.ok){
+      return { success: false , data}
+    }
+    
+
+    return { success: true,  data};
   } catch (e: any) {
     console.error("Failed to register form, " , e) 
 
