@@ -23,3 +23,22 @@ export const loginUser = async(loginCredential: LoginCredential ) => {
     }
 
 }
+
+export const fetchUserJWT = async(session: string ) => {
+    try{
+        const res = await fetch(`${API_URL}/api/users/me`,  {
+            method: 'POST',
+            headers:{
+                'Authorization': `${session}`,
+            }
+        })
+        const data = await res.json()
+        if(!res.ok){
+            return{ success: false, data}
+        }
+        return { success: true , data}
+    }catch(err){
+        console.log("Login thourgh jwt failed ", err)
+        return { success: false }
+    }
+}

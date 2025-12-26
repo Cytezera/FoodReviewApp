@@ -13,6 +13,7 @@ export default function AppLayout(){
         <Stack>
             <Stack.Screen name ="(tabs)" options = {{ headerShown: false }} />
             <Stack.Screen name="temp" options={{ headerShown: false }} />
+            <Stack.Screen name ="settings" options = {{ headerShown: false }} />
             
         </Stack>
     )

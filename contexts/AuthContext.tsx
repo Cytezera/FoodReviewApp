@@ -1,8 +1,6 @@
-import { loginUser } from '@/services/authService';
-import { LoginCredential } from '@/types/user';
-
-import { User } from '@/types/user';
-import { createContext, useContext, useState, type PropsWithChildren } from 'react';
+import { fetchUserJWT, loginUser } from '@/services/authService';
+import { LoginCredential, User } from '@/types/user';
+import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
 
 import { useStorageState } from '@/hooks/useStorageState';
 
@@ -36,16 +34,33 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [[isLoading, session], setSession] = useStorageState('session');
   const [ user , setUser ] = useState<User | null>(null);
 
-  // useEffect(() => {
-  //   if (!session) return; 
+  useEffect(() => {
+    if (!session){
+      setUser(null);
+      return 
+    }
 
-  //   pb.authStore.save(session,null);
-  //   if (pb.authStore.isValid) {
-  //     const currentUser = pb.authStore.model as User;
-  //     setUser(currentUser);
-  //   }
-  // },[session])
+    const fetchUser = async() => {
+      try{
+        const result = await fetchUserJWT(session)
+        if (result.success){
+          setUser(result.data.user)
+        }
+        if (!result.success){
+          setSession(null)
+        }
+        
 
+        
+      }catch(err){
+        console.error("Unable to fetch user through jwt")
+        setSession(null)
+        setUser(null)
+      }
+    }
+    fetchUser()
+
+  },[session])
   return (
     <AuthContext.Provider
       value={{

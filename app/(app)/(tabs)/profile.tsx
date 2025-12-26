@@ -1,14 +1,16 @@
-import { Image, ScrollView, Text, View, StyleSheet } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol  } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme"
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Loading } from "@/components/ui/Loading";
+import { Colors } from "@/constants/theme";
 import { useSession } from "@/contexts/AuthContext";
-import { Loading } from "@/components/ui/Loading"
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
+  const router = useRouter()
   const { user , session , isLoading } = useSession()
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
@@ -22,7 +24,7 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
         {/* Top Row */}
         <View style={styles.topRow}>
-          <Button variant="secondary" onPress={() => {}} style={{ backgroundColor: theme.secondaryBackground }}>
+          <Button variant="secondary" onPress={() => router.push("/settings")} style={{ backgroundColor: theme.secondaryBackground }}>
             <IconSymbol name="settings" size={24} color={theme.text} />
           </Button>
           <Button variant="secondary" onPress={() => {}} style={{ backgroundColor: theme.secondaryBackground }}>
@@ -37,8 +39,8 @@ export default function ProfileScreen() {
             style={styles.avatar}
           />
           <View style={styles.profileInfo}>
-            <Text style={[styles.name, { color: theme.text }]}>Test</Text>
-            <Text style={[styles.email, { color: theme.secondaryText || "#666" }]}>johndoe@example.com</Text>
+            <Text style={[styles.name, { color: theme.text }]}>{user.name || "hey"} </Text>
+            <Text style={[styles.email, { color: theme.secondaryText || "#666" }]}>{user.email}</Text>
           </View>
         </View>
 

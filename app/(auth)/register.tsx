@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useSession } from '@/contexts/AuthContext';
 import { registerAccount } from "@/services/registerService";
+import { LoginCredential } from "@/types/user";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -17,12 +18,18 @@ export default function Register() {
   const [nationality, setNationality] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const loginSession = async (email: string, password: string) => {
+    const loginCredential: LoginCredential = {
+      username: '',
+      email: email,
+      password: password,
+    } 
     try{
-      signIn(email, password )
+      signIn(loginCredential)
     }catch(e){
       console.error("Login failed ")
     }
