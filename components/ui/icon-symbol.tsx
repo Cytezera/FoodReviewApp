@@ -21,7 +21,8 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'settings': 'settings',
-  'arrow-back': 'arrow-back'
+  'arrow-back': 'arrow-back',
+  'camera.fill': 'camera-alt'
 } as IconMapping;
 
 /**

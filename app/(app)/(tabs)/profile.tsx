@@ -6,7 +6,7 @@ import { Colors } from "@/constants/theme";
 import { useSession } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRouter } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
@@ -33,7 +33,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Profile Row */}
-        <View style={[styles.profileRow, { backgroundColor: theme.cardBackground || "#fff" }]}>
+        <Pressable style={[styles.profileRow, { backgroundColor: theme.cardBackground || "#fff" }]}  onPress={()=> router.push("/edit-profile")}>
           <Image
             source={{ uri: "https://via.placeholder.com/100" }}
             style={styles.avatar}
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
             <Text style={[styles.name, { color: theme.text }]}>{user.name || "hey"} </Text>
             <Text style={[styles.email, { color: theme.secondaryText || "#666" }]}>{user.email}</Text>
           </View>
-        </View>
+        </Pressable>
 
         {/* Points Card */}
 <Card style={[styles.pointsCard, { backgroundColor: theme.cardBackground || "#fff" }]}>

@@ -20,3 +20,10 @@ export type LoginResponse = {
     user: User;
 }
 
+export type UpdateUser = { 
+    id: string;
+    email: string;
+    name: string;
+    nationality?: string;    
+    dob: Date;
+}
