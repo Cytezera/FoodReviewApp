@@ -22,7 +22,14 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'settings': 'settings',
   'arrow-back': 'arrow-back',
-  'camera.fill': 'camera-alt'
+  'camera.fill': 'camera-alt',
+  'person': 'person',
+  'email': 'email',
+  'cake': 'cake',
+  'flag':'flag',
+  'lock.fill': 'lock',
+  'shield.fill' : 'shield'
+
 } as IconMapping;
 
 /**

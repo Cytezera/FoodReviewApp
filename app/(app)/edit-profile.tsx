@@ -3,6 +3,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useSession } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { updateUser } from "@/services/userService";
+import { UpdateUser } from "@/types/user";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -23,16 +25,165 @@ export default function EditProfileScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
 
+  // Helper function to format date to YYYY-MM-DD
+  const formatDateToYYYYMMDD = (date: string) => {
+    if (!date) return "";
+    
+    // If it's already a string in YYYY-MM-DD format, return it
+    if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+    
+    // If it's a Date object or parseable string
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return "";
+    
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    
+    return `${year}-${month}-${day}`;
+  };
+
   const [profile, setProfile] = useState({
     name: user?.name || "",
     email: user?.email || "",
     nationality: user?.nationality || "",
-    dob: user?.dob || null,
+    dob: formatDateToYYYYMMDD(user?.dob) || "",
   });
 
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Profile saved:", profile);
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    nationality: "",
+    dob: "",
+  });
+
+  // Handle date input change with validation
+  const handleDateChange = (text) => {
+    // Remove non-numeric and non-dash characters
+    let cleaned = text.replace(/[^\d-]/g, "");
+    
+    // Auto-format as user types
+    if (cleaned.length <= 10) {
+      // Add dashes automatically
+      if (cleaned.length >= 4 && cleaned[4] !== "-") {
+        cleaned = cleaned.slice(0, 4) + "-" + cleaned.slice(4);
+      }
+      if (cleaned.length >= 7 && cleaned[7] !== "-") {
+        cleaned = cleaned.slice(0, 7) + "-" + cleaned.slice(7);
+      }
+      
+      setProfile({ ...profile, dob: cleaned });
+      // Clear error when user starts typing
+      if (errors.dob) {
+        setErrors({ ...errors, dob: "" });
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    const hasErrors = checkValidity()
+    if (hasErrors){
+      return 
+    }
+    const newUser: UpdateUser = {
+      id: user?.id, 
+      email: profile.email,
+      name: profile.name ,
+      nationality: profile.name,
+      dob: profile.dob,
+    }
+
+    const result = await updateUser(newUser)
+    console.log(result)
+
+    if (result.success){
+      router.back()
+    }
+
+    if (result.data.error === "Duplicate email"){
+      setErrors({...errors, email: "Email already in use"})
+    }
+    
+  };
+
+  const checkValidity = () => {
+    // Reset errors
+    const newErrors = {
+      name: "",
+      email: "",
+      nationality: "",
+      dob: "",
+    };
+
+    let hasErrors = false;
+
+    // Validate name
+    if (!profile.name.trim()) {
+      newErrors.name = "Name is required";
+      hasErrors = true;
+    }
+
+    // Validate email
+    if (!profile.email.trim()) {
+      newErrors.email = "Email is required";
+      hasErrors = true;
+    } else {
+      // Basic email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(profile.email)) {
+        newErrors.email = "Please enter a valid email address";
+        hasErrors = true;
+      }
+    }
+
+    // Validate nationality
+    if (!profile.nationality.trim()) {
+      newErrors.nationality = "Nationality is required";
+      hasErrors = true;
+    }
+
+    // Validate date of birth
+    if (!profile.dob.trim()) {
+      newErrors.dob = "Date of birth is required";
+      hasErrors = true;
+    } else {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      
+      if (!dateRegex.test(profile.dob)) {
+        newErrors.dob = "Please enter date in YYYY-MM-DD format";
+        hasErrors = true;
+      } else {
+        // Additional validation: check if it's a valid date
+        const [year, month, day] = profile.dob.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        
+        if (
+          date.getFullYear() !== year ||
+          date.getMonth() !== month - 1 ||
+          date.getDate() !== day
+        ) {
+          newErrors.dob = "Please enter a valid date";
+          hasErrors = true;
+        }
+      }
+    }
+
+    setErrors(newErrors);
+
+    if (hasErrors) {
+      return true;
+    }
+    return false 
+  }
+
+  // Clear error when user starts typing
+  const handleInputChange = (field: string, value: string) => {
+    setProfile({ ...profile, [field]: value });
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: "" });
+    }
   };
 
   return (
@@ -113,7 +264,7 @@ export default function EditProfileScreen() {
                 styles.inputContainer,
                 {
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.border || "#e0e0e0",
+                  borderColor: errors.name ? "#ff3b30" : theme.border || "#e0e0e0",
                 },
               ]}
             >
@@ -126,11 +277,14 @@ export default function EditProfileScreen() {
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={profile.name}
-                onChangeText={(text) => setProfile({ ...profile, name: text })}
+                onChangeText={(text) => handleInputChange("name", text)}
                 placeholder="Enter your name"
                 placeholderTextColor={theme.secondaryText || "#999"}
               />
             </View>
+            {errors.name ? (
+              <Text style={styles.errorText}>{errors.name}</Text>
+            ) : null}
           </View>
 
           {/* Email Input */}
@@ -141,12 +295,12 @@ export default function EditProfileScreen() {
                 styles.inputContainer,
                 {
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.border || "#e0e0e0",
+                  borderColor: errors.email ? "#ff3b30" : theme.border || "#e0e0e0",
                 },
               ]}
             >
               <IconSymbol
-                name="envelope"
+                name="email"
                 size={20}
                 color={theme.secondaryText || "#666"}
                 style={styles.inputIcon}
@@ -154,29 +308,32 @@ export default function EditProfileScreen() {
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={profile.email}
-                onChangeText={(text) => setProfile({ ...profile, email: text })}
+                onChangeText={(text) => handleInputChange("email", text)}
                 placeholder="Enter your email"
                 placeholderTextColor={theme.secondaryText || "#999"}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
             </View>
+            {errors.email ? (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            ) : null}
           </View>
 
           {/* Nationality Input */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.text }]}>Nationality </Text>
+            <Text style={[styles.label, { color: theme.text }]}>Nationality</Text>
             <View
               style={[
                 styles.inputContainer,
                 {
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.border || "#e0e0e0",
+                  borderColor: errors.nationality ? "#ff3b30" : theme.border || "#e0e0e0",
                 },
               ]}
             >
               <IconSymbol
-                name="phone"
+                name="flag"
                 size={20}
                 color={theme.secondaryText || "#666"}
                 style={styles.inputIcon}
@@ -184,11 +341,14 @@ export default function EditProfileScreen() {
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={profile.nationality}
-                onChangeText={(text) => setProfile({ ...profile, nationality: text })}
+                onChangeText={(text) => handleInputChange("nationality", text)}
                 placeholder="Enter your nationality"
                 placeholderTextColor={theme.secondaryText || "#999"}
               />
             </View>
+            {errors.nationality ? (
+              <Text style={styles.errorText}>{errors.nationality}</Text>
+            ) : null}
           </View>
 
           {/* Date of Birth Input */}
@@ -202,12 +362,12 @@ export default function EditProfileScreen() {
                 styles.inputContainer,
                 {
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.border || "#e0e0e0",
+                  borderColor: errors.dob ? "#ff3b30" : theme.border || "#e0e0e0",
                 },
               ]}
             >
               <IconSymbol
-                name="calendar"
+                name="cake"
                 size={20}
                 color={theme.secondaryText || "#666"}
                 style={styles.inputIcon}
@@ -216,16 +376,18 @@ export default function EditProfileScreen() {
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={profile.dob}
-                onChangeText={(text) =>
-                  setProfile({ ...profile, dob: text })
-                }
+                onChangeText={handleDateChange}
                 placeholder="YYYY-MM-DD"
                 placeholderTextColor={theme.secondaryText || "#999"}
+                keyboardType="numeric"
+                maxLength={10}
               />
             </View>
+            {errors.dob ? (
+              <Text style={styles.errorText}>{errors.dob}</Text>
+            ) : null}
           </View>
         </View>
-
 
         {/* Additional Options */}
         <View
@@ -294,7 +456,6 @@ export default function EditProfileScreen() {
         </Button>
       </ScrollView>
     </SafeAreaView>
-    
   );
 }
 
@@ -389,6 +550,12 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     paddingTop: 12,
+  },
+  errorText: {
+    color: "#ff3b30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
   optionsContainer: {
     paddingHorizontal: 20,
