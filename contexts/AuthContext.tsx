@@ -1,19 +1,22 @@
 import { fetchUserJWT, loginUser } from '@/services/authService';
 import { LoginCredential, User } from '@/types/user';
-import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { createContext, useContext, type PropsWithChildren } from 'react';
 
 import { useStorageState } from '@/hooks/useStorageState';
 
 
 
 const AuthContext = createContext<{
-  signIn: (loginCredential: LoginCredential) => void;
+  signIn: (loginCredential: LoginCredential) => Promise<any>;
   signOut: () => void;
   session?: string | null;
   user? : User | null;
   isLoading: boolean;
 }>({
-  signIn: (loginCredential: LoginCredential ) => null,
+  signIn: (loginCredential: LoginCredential ) => {
+    return Promise.resolve(null)
+  },
   signOut: () => null,
   session: null,
   user: null,
@@ -29,64 +32,102 @@ export function useSession() {
 
   return value;
 }
+const useAuthUser = (token:string | null) => {
+    return useQuery({
+      queryKey: ['auth-user', token],
+      queryFn: async () => {
+        if (!token ) return null 
+        const result = await fetchUserJWT(token)
+        if (!result.success) throw new Error('Inavlid session')
+        return result.data.user
+      },
+      enabled: !!token,
+    })
+}
 
 export function SessionProvider({ children }: PropsWithChildren) {
-  const [[isLoading, session], setSession] = useStorageState('session');
-  const [ user , setUser ] = useState<User | null>(null);
+  const [[isLoadingStorage, session], setSession] = useStorageState('session');
+  const { data:user, isLoading, isError } = useAuthUser(session)
+  if (isError && session ){
+    setSession(null)
+  }
 
-  useEffect(() => {
-    if (!session){
-      setUser(null);
-      return 
-    }
-
-    const fetchUser = async() => {
-      try{
-        const result = await fetchUserJWT(session)
-        if (result.success){
-          setUser(result.data.user)
-        }
-        if (!result.success){
-          setSession(null)
-        }
-        
-
-        
-      }catch(err){
-        console.error("Unable to fetch user through jwt")
-        setSession(null)
-        setUser(null)
-      }
-    }
-    fetchUser()
-
-  },[session])
   return (
     <AuthContext.Provider
       value={{
-        signIn: async (loginCredential: LoginCredential) => {
-          const result = await loginUser(loginCredential)
-          
-          if (result.success){
-            setSession(result.data.token);
-            setUser(result.data.user)
-            return  ({ success: true })
-          }
-          if (!result.success){
-            console.log(result.data.error)
-            return ({ success: false , error: result.data.error }) 
-          }
-          
-        },
-        signOut: () => {
-          setSession(null);
-          setUser(null);
-        },
         session,
-        user,
-        isLoading,
-      }}>
+        user: user ?? null,
+        isLoading: isLoadingStorage || isLoading,
+        signIn: async (cred ) => {
+          const result = await loginUser(cred)
+          if (result.success){
+            setSession(result.data.token)
+          }
+          return result 
+        },
+        signOut: () => setSession(null)
+      }}
+      > 
       {children}
-    </AuthContext.Provider>
-  );
+      </AuthContext.Provider>
+  )
+  // const [ user , setUser ] = useState<User | null>(null);
+
+
+
+  // useEffect(() => {
+  //   if (!session){
+  //     setUser(null);
+  //     return 
+  //   }
+
+  //   const fetchUser = async() => {
+  //     try{
+  //       const result = await fetchUserJWT(session)
+  //       if (result.success){
+  //         setUser(result.data.user)
+  //       }
+  //       if (!result.success){
+  //         setSession(null)
+  //       }
+        
+
+        
+  //     }catch(err){
+  //       console.error("Unable to fetch user through jwt")
+  //       setSession(null)
+  //       setUser(null)
+  //     }
+  //   }
+  //   fetchUser()
+
+  // },[session])
+  // return (
+  //   <AuthContext.Provider
+  //     value={{
+  //       signIn: async (loginCredential: LoginCredential) => {
+  //         const result = await loginUser(loginCredential)
+          
+  //         if (result.success){
+  //           setSession(result.data.token);
+  //           setUser(result.data.user)
+  //           return  ({ success: true })
+  //         }
+  //         if (!result.success){
+  //           console.log(result.data.error)
+  //           return ({ success: false , error: result.data.error }) 
+  //         }
+          
+  //       },
+  //       signOut: () => {
+  //         setSession(null);
+  //         setUser(null);
+  //       },
+  //       session,
+  //       user,
+  //       isLoading,
+  //     }}>
+  //     {children}
+  //   </AuthContext.Provider>
+  // );
 }

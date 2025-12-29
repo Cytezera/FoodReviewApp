@@ -5,6 +5,7 @@ import { useSession } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { updateUser } from "@/services/userService";
 import { UpdateUser } from "@/types/user";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -20,6 +21,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EditProfileScreen() {
+  const queryClient = useQueryClient() 
   const router = useRouter();
   const { user } = useSession();
   const colorScheme = useColorScheme() ?? "light";
@@ -81,12 +83,22 @@ export default function EditProfileScreen() {
       }
     }
   };
+  const updateProfileMutation = useMutation({
+    mutationFn: updateUser,
+    onSuccess: (result) => {
+      if (result.success){
+        queryClient.invalidateQueries({ queryKey: ['auth-user']})
+        router.back();
+      } else if (result.data?.error === "Duplicate email"){
+        setErrors((prev) => ({ ...prev, email: "Email alrady in use "}));
+      }
+    }
+  })
 
   const handleSave = async () => {
-    const hasErrors = checkValidity()
-    if (hasErrors){
-      return 
-    }
+    if (checkValidity()) return  //this one if the shit input given by user is not valid 
+
+
     const newUser: UpdateUser = {
       id: user?.id, 
       email: profile.email,
@@ -95,16 +107,7 @@ export default function EditProfileScreen() {
       dob: profile.dob,
     }
 
-    const result = await updateUser(newUser)
-    console.log(result)
-
-    if (result.success){
-      router.back()
-    }
-
-    if (result.data.error === "Duplicate email"){
-      setErrors({...errors, email: "Email already in use"})
-    }
+    updateProfileMutation.mutate(newUser)
     
   };
 
