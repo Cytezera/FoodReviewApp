@@ -1,5 +1,9 @@
+import { queryClient } from '@/app/providers/QueryClient';
 import { SplashScreenController } from '@/components/splash';
 import { SessionProvider, useSession } from '@/contexts/AuthContext';
+import { QueryClientProvider } from '@tanstack/react-query';
+
+
 import { Stack } from 'expo-router';
 
 // export const unstable_settings = {
@@ -25,9 +29,11 @@ function RootNavigator(){
 
 export default function Root(){
   return(
-    <SessionProvider>
-      <SplashScreenController/>
-      <RootNavigator/>
-    </SessionProvider>
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider>
+        <SplashScreenController/>
+        <RootNavigator/>
+      </SessionProvider>
+      </QueryClientProvider>
   )
 }
