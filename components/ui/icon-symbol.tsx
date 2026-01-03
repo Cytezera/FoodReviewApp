@@ -28,7 +28,10 @@ const MAPPING = {
   'cake': 'cake',
   'flag':'flag',
   'lock.fill': 'lock',
-  'shield.fill' : 'shield'
+  'shield.fill' : 'shield',
+  'search' : 'search',
+  'filter': 'filter-list',
+  'fire' : 'local-fire-department'
 
 } as IconMapping;
 
