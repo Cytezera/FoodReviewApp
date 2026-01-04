@@ -1,5 +1,6 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
 import {
@@ -79,6 +80,8 @@ const filterChips = [
 ];
 
 export default function DiscoverScreen() {
+  const { errorMsg,loading,location, address } = useLocationContext()
+
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
   const isDark = colorScheme === 'dark';
@@ -90,9 +93,12 @@ export default function DiscoverScreen() {
         {/* Location & Profile */}
         <View style={styles.locationRow}>
           <View style={styles.locationInfo}>
-            <Text style={[styles.locationLabel, { color: '#D65F00' }]}>LOCATION</Text>
+            <Text style={[styles.locationLabel, { color: theme.boldText }]}>LOCATION</Text>
             <Pressable style={styles.locationButton}>
-              <Text style={[styles.locationText, { color: theme.text }]}>San Francisco, CA</Text>
+              <Text style={[styles.locationText, { color: theme.text }]}> 
+                {address?.city ?? address?.subregion ?? 'Unknown city'}, 
+                {address?.region ?? 'Unknown region'} 
+            </Text>
               <IconSymbol name="chevron.down" size={20} color="#D65F00" />
             </Pressable>
           </View>
@@ -104,7 +110,7 @@ export default function DiscoverScreen() {
 
         {/* Search Bar */}
         <View style={[styles.searchContainer, { backgroundColor: theme.cardBackground, borderWidth: 1, borderColor: theme.border }]}>
-          <IconSymbol name="search" size={24} color="#D65F00" style={styles.searchIcon} />
+          <IconSymbol name="search" size={24} color={theme.buttonBackground} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
             placeholder="Search tacos, sushi, burgers..."

@@ -10,6 +10,7 @@ const tintColorDark = '#FFA500';   // Bright orange
 export const Colors = {
   light: {
     text: '#11181C',               // primary text
+    boldText: '#D65F00',
     secondaryText: '#687076',      // secondary / muted text
     background: '#FFFFFF',         // main background
     cardBackground: '#F9F9F9',     // cards / surfaces
@@ -25,6 +26,7 @@ export const Colors = {
   },
   dark: {
     text: '#ECEDEE',
+    boldText: '#D65F00',
     secondaryText: '#9BA1A6',
     background: '#151718',
     cardBackground: '#1E1F1F',
