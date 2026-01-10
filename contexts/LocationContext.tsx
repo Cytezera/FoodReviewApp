@@ -25,7 +25,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode}) => 
         let isMounted = true;
         ;(async() => {
             try{
-                const { status } = await Location.requestBackgroundPermissionsAsync()
+                const { status } = await Location.requestForegroundPermissionsAsync()
                 if (status !== 'granted'){
                     if (isMounted) setErrorMsg('Location permission denied ')
                         return

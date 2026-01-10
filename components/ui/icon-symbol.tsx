@@ -31,7 +31,8 @@ const MAPPING = {
   'shield.fill' : 'shield',
   'search' : 'search',
   'filter': 'filter-list',
-  'fire' : 'local-fire-department'
+  'fire' : 'local-fire-department',
+  'restaurant' : 'restaurant',
 
 } as IconMapping;
 
