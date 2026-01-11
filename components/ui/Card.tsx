@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ViewProps } from "react-native";
+import { Image, StyleSheet, Text, View, ViewProps } from "react-native";
 
 type CardProps = ViewProps & {
   children: React.ReactNode;
@@ -37,6 +37,7 @@ type Props = {
     rating: number
     priceRange: string
     status: string
+    image: string
   }
 }
 
@@ -52,7 +53,9 @@ export function PlaceDetailCard({ place }: Props) {
 
         {/* Content */}
         <View style={placeStyles.row}>
-          <View style={placeStyles.image} />
+          <View style={placeStyles.image}>
+            <Image source={{ uri: place.image }}  style={placeStyles.image}/>
+          </View>
 
           <View style={placeStyles.details}>
             <Text style={placeStyles.title} numberOfLines={1}>
