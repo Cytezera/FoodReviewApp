@@ -1,5 +1,5 @@
 import { PlaceDetailCard } from "@/components/ui/Card";
-import { PlaceMarker } from "@/components/ui/marker";
+import { PlaceMarker, SelectedPlaceMarker } from "@/components/ui/marker";
 import { useLocationContext } from "@/contexts/LocationContext";
 import React, { useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -132,7 +132,16 @@ export default function App() {
             onPress={() => setSelectedId(place.id)}
             anchor={{ x: 0.5, y: 1 }}
           >
-            <PlaceMarker />
+            {selectedId === place.id ? (
+              <View style={{ transform: [{scale: 1.0}] }}>
+              <SelectedPlaceMarker />
+              </View>
+            ) : (
+              <View style={{transform: [{scale: 0.7}]}}>
+                <PlaceMarker />
+              </View>
+            )}
+            {/* {selectedId === place.id ? <SelectedPlaceMarker /> : <PlaceMarker />} */}
           </Marker>
         ))}
       </MapView>

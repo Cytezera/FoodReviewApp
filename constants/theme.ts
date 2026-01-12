@@ -9,6 +9,7 @@ const tintColorDark = '#FFA500';   // Bright orange
 
 export const Colors = {
   light: {
+    heavy:'#D65F00',
     text: '#11181C',               // primary text
     boldText: '#D65F00',
     secondaryText: '#687076',      // secondary / muted text
@@ -25,6 +26,7 @@ export const Colors = {
     buttonSecondaryText: '#FF8C00',       // secondary button text - orange
   },
   dark: {
+    heavy:'#D65F00',
     text: '#ECEDEE',
     boldText: '#D65F00',
     secondaryText: '#9BA1A6',
