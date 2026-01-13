@@ -1,8 +1,13 @@
+import { FilterPanel } from "@/components/explore/filterPanel";
 import { PlaceDetailCard } from "@/components/ui/Card";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { PlaceMarker, SelectedPlaceMarker } from "@/components/ui/marker";
+import { Colors } from "@/constants/theme";
 import { useLocationContext } from "@/contexts/LocationContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Filters } from "@/types/filter";
 import React, { useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 const places = [
@@ -98,6 +103,17 @@ const places = [
 export default function App() {
   const { location, loading } = useLocationContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [ filterValues, setFilterValues] = useState<Filters>({
+    cuisine: [],
+    priceIndex: 1,
+    rating: 4,
+    openNow: true
+  });
+
+  const colorScheme = useColorScheme() ?? "light";
+  const theme = Colors[colorScheme];
+  const isDark = colorScheme === "dark";
 
   const selectedPlace = useMemo(
     () => places.find((p) => p.id === selectedId),
@@ -114,12 +130,21 @@ export default function App() {
         style={styles.map}
         showsUserLocation
         followsUserLocation
+        showsMyLocationButton={false}
         region={{
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
+        customMapStyle={[
+          { featureType: "poi", stylers: [{ visibility: "off" }] }, // remove points of interest
+          //  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] }, // map background
+          // { elementType: "labels", stylers: [{ visibility: "off" }] }, // remove all labels
+          // { featureType: "road", stylers: [{ visibility: "off" }] }, // remove roads
+          // { featureType: "transit", stylers: [{ visibility: "off" }] }, // remove transit lines
+          // { featureType: "water", stylers: [{ color: "#c9c9c9" }] }, // optional water color
+        ]}
         onPress={() => setSelectedId(null)}
       >
         {places.map((place) => (
@@ -133,11 +158,11 @@ export default function App() {
             anchor={{ x: 0.5, y: 1 }}
           >
             {selectedId === place.id ? (
-              <View style={{ transform: [{scale: 1.0}] }}>
-              <SelectedPlaceMarker />
+              <View style={{ transform: [{ scale: 1.0 }] }}>
+                <SelectedPlaceMarker />
               </View>
             ) : (
-              <View style={{transform: [{scale: 0.7}]}}>
+              <View style={{ transform: [{ scale: 0.7 }] }}>
                 <PlaceMarker />
               </View>
             )}
@@ -145,6 +170,34 @@ export default function App() {
           </Marker>
         ))}
       </MapView>
+
+
+
+      <View
+        style={[
+          styles.searchContainer,
+          {
+            backgroundColor: theme.cardBackground,
+            borderWidth: 1,
+            borderColor: theme.border,
+          },
+        ]}
+      >
+        <IconSymbol
+          name="search"
+          size={24}
+          color={theme.buttonBackground}
+          style={styles.searchIcon}
+        />
+        <TextInput
+          placeholder="Serach for places"
+          style={[styles.searchInput, { color: theme.text }]}
+          placeholderTextColor={theme.secondaryText}
+        />
+        <Pressable style={styles.filterButton} onPress={() => setFilterVisible(!filterVisible)}>
+          <IconSymbol name="filter" size={20} color={theme.text} />
+        </Pressable>
+      </View>
 
       {selectedPlace && (
         <View style={styles.bottomCard}>
@@ -155,12 +208,20 @@ export default function App() {
               rating: selectedPlace.rating,
               priceRange: selectedPlace.priceRange,
               status: selectedPlace.status,
-              image: selectedPlace.images.find((img) => img.isPrimary)?.url ?? selectedPlace.images[0].url,
-
+              image:
+                selectedPlace.images.find((img) => img.isPrimary)?.url ??
+                selectedPlace.images[0].url,
             }}
           />
         </View>
       )}
+
+      <FilterPanel
+        visible={filterVisible}
+        onClose={() => setFilterVisible(false)}
+        value = {filterValues}
+        onChange = {setFilterValues}
+        />
     </View>
   );
 }
@@ -210,5 +271,38 @@ const styles = StyleSheet.create({
   status: {
     fontWeight: "600",
     color: "green",
+  },
+
+    searchContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+    position: "absolute",
+    top: 50,
+    left: 16,
+    right: 16,
+    zIndex: 10,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    elevation: 3, 
+    shadowColor: "#000",
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  filterButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: "auto",
   },
 });

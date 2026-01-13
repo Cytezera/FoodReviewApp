@@ -24,6 +24,7 @@ export const Colors = {
     buttonText: '#FFFFFF',         // primary button text
     buttonSecondaryBackground: '#FFF5E6', // secondary button background - light orange
     buttonSecondaryText: '#FF8C00',       // secondary button text - orange
+    muted: '#e5e5e5'
   },
   dark: {
     heavy:'#D65F00',
@@ -41,6 +42,7 @@ export const Colors = {
     buttonText: '#000000',
     buttonSecondaryBackground: '#2C2D2E',
     buttonSecondaryText: '#FFA500', // secondary button text - orange
+    muted: '#f5f5f82a'
   },
 };
 

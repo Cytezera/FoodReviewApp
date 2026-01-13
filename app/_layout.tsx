@@ -3,12 +3,17 @@ import { SplashScreenController } from "@/components/splash";
 import { SessionProvider, useSession } from "@/contexts/AuthContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { QueryClientProvider } from "@tanstack/react-query";
-
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 
 // export const unstable_settings = {
 //   anchor: '(tabs)',
 // };
+
+SplashScreen.setOptions({
+  duration: 1000,
+  fade:true ,
+})
 
 function RootNavigator() {
   const { session } = useSession();
