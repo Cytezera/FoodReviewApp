@@ -5,6 +5,7 @@ export type User = {
     nationality?: string;
     points: Int16Array;
     dob: Date;
+    title?: string;
 
 }
 

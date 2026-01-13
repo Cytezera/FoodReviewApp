@@ -14,6 +14,9 @@ export default function ProfileScreen() {
   const { user , session , isLoading } = useSession()
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
+  const goalPoints = 2500;
+  const percentage = user ? Math.min((user.points / goalPoints) * 100, 100) : 0;
+  const pointsDifference = 2500 - user.points
 
   if (isLoading){
     return <Loading/>
@@ -49,9 +52,9 @@ export default function ProfileScreen() {
   {/* Top Row: Title and avatar */}
   <View style={styles.cardTopRow}>
     <View style={{ flex: 1 }}>
-      <Text style={[styles.cardTitle, { color: theme.cardText }]}>Gold Tier</Text>
+      <Text style={[styles.cardTitle, { color: theme.cardText }]}>{user.title}</Text>
       <Text style={[styles.cardSubtitle, { color: theme.cardText || "#666" }]}>
-        300 pts away to Platinum Tier
+        {pointsDifference} pts away to Next Tier
       </Text>
     </View>
     <Image
@@ -62,9 +65,9 @@ export default function ProfileScreen() {
 
   {/* Progress + Points */}
   <View style={styles.progressContainer}>
-    <Text style={[styles.pointsNumber, { color: theme.cardText }]}>3000</Text>
+    <Text style={[styles.pointsNumber, { color: theme.cardText }]}>{user.points}</Text>
     <View style={[styles.progressBarBackground, { backgroundColor: theme.tint }]}>
-      <View style={[styles.progressBarFill, { width: "50%", backgroundColor: theme.cardText }]} />
+      <View style={[styles.progressBarFill, { width: `${percentage}`, backgroundColor: theme.cardText }]} />
     </View>
     <Text style={[styles.pointsSuffix, { color: theme.cardText }]}>pts</Text>
   </View>
@@ -159,16 +162,6 @@ progressBarFill: {
   height: "100%",
   borderRadius: 5,
 },
-progressBarBackground: {
-  width: "100%",
-  height: 10,
-  borderRadius: 5,
-  backgroundColor: "#eee",
-  overflow: "hidden",
-  marginTop: 0,
-  marginBottom: 20
-  
-},
 
 
 viewRewards: {
@@ -180,7 +173,7 @@ viewRewards: {
 
 pointsCard: {
   padding: 24, // more padding
-  borderRadius: 16,
+  borderRadius: 23,
   flexDirection: "column",
   gap: 16,
 },
