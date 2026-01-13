@@ -45,13 +45,13 @@ export default function ProfileScreen() {
         </Pressable>
 
         {/* Points Card */}
-<Card style={[styles.pointsCard, { backgroundColor: theme.cardBackground || "#fff" }]}>
-  {/* Top Row: Title, progress text, avatar */}
+<Card style={[styles.pointsCard, { backgroundColor: theme.heavy || "#fff" }]}>
+  {/* Top Row: Title and avatar */}
   <View style={styles.cardTopRow}>
     <View style={{ flex: 1 }}>
-      <Text style={[styles.cardTitle, { color: theme.text }]}>Gold Tier</Text>
-      <Text style={[styles.cardSubtitle, { color: theme.secondaryText || "#666" }]}>
-        300 points away to Platinum Tier
+      <Text style={[styles.cardTitle, { color: theme.cardText }]}>Gold Tier</Text>
+      <Text style={[styles.cardSubtitle, { color: theme.cardText || "#666" }]}>
+        300 pts away to Platinum Tier
       </Text>
     </View>
     <Image
@@ -60,13 +60,14 @@ export default function ProfileScreen() {
     />
   </View>
 
-  {/* Progress Bar */}
-  <View style={styles.progressBarBackground}>
-    <View style={[styles.progressBarFill, { width: "70%", backgroundColor: theme.tint }]} />
+  {/* Progress + Points */}
+  <View style={styles.progressContainer}>
+    <Text style={[styles.pointsNumber, { color: theme.cardText }]}>3000</Text>
+    <View style={[styles.progressBarBackground, { backgroundColor: theme.tint }]}>
+      <View style={[styles.progressBarFill, { width: "50%", backgroundColor: theme.cardText }]} />
+    </View>
+    <Text style={[styles.pointsSuffix, { color: theme.cardText }]}>pts</Text>
   </View>
-
-  {/* View Rewards */}
-  <Text style={[styles.viewRewards, { color: theme.tint }]}>View my rewards</Text>
 </Card>
 
         {/* Bottom placeholder */}
@@ -116,24 +117,20 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4,
   },
-  pointsCard: {
-    alignItems: "center",
-    paddingVertical: 24,
+  pointsTextContaier:{
+    marginTop: 9,
+    marginBottom:0
   },
   pointsText: {
-    fontSize: 18,
+    marginLeft: 0,
+    fontSize: 30,
     fontWeight: "600",
+    marginBottom: 0,
   },
   bottomPlaceholder: {
     alignItems: "center",
     paddingVertical: 24,
   },
-  pointsCard: {
-  padding: 16,
-  borderRadius: 16,
-  flexDirection: "column",
-  gap: 16,
-},
 
 cardTopRow: {
   flexDirection: "row",
@@ -142,7 +139,7 @@ cardTopRow: {
 },
 
 cardTitle: {
-  fontSize: 18,
+  fontSize: 25,
   fontWeight: "600",
 },
 
@@ -158,25 +155,65 @@ cardAvatar: {
   backgroundColor: "#ddd",
 },
 
+progressBarFill: {
+  height: "100%",
+  borderRadius: 5,
+},
 progressBarBackground: {
   width: "100%",
   height: 10,
   borderRadius: 5,
   backgroundColor: "#eee",
   overflow: "hidden",
-  marginTop: 8,
+  marginTop: 0,
+  marginBottom: 20
+  
 },
 
-progressBarFill: {
-  height: "100%",
-  borderRadius: 5,
-},
 
 viewRewards: {
   marginTop: 12,
   fontWeight: "600",
   fontSize: 14,
   textAlign: "center",
+},
+
+pointsCard: {
+  padding: 24, // more padding
+  borderRadius: 16,
+  flexDirection: "column",
+  gap: 16,
+},
+
+progressContainer: {
+  marginTop: 35,
+  marginBottom: 16,
+  position: "relative",
+},
+
+pointsNumber: {
+  position: "absolute",
+  left: 0,           // aligns with start of progress bar
+  bottom: 12,        // slightly above the bar
+  fontSize: 30,
+  fontWeight: "600",
+},
+
+pointsSuffix: {
+  position: "absolute",
+  right: 0,          // aligns with end of progress bar
+  bottom: 12,
+  fontSize: 16,
+  fontWeight: "600",
+},
+
+progressBarBackground: {
+  width: "100%",
+  height: 10,
+  borderRadius: 5,
+  backgroundColor: "#eee",
+  overflow: "hidden",
+  marginTop: 16,
 },
 
 });
