@@ -5,110 +5,120 @@ import { PlaceMarker, SelectedPlaceMarker } from "@/components/ui/marker";
 import { Colors } from "@/constants/theme";
 import { useLocationContext } from "@/contexts/LocationContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { fetchAllPlaces } from "@/services/placeService";
 import { Filters } from "@/types/filter";
+import { Place } from "@/types/place";
+import { useQuery } from "@tanstack/react-query";
 import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
-const places = [
-  {
-    id: 1,
-    name: "Sunrise Coffee",
-    description: "Cozy coffee shop with great pastries.",
-    address: "123 Morning St, Cityville",
-    latitude: 5.965418758200848,
-    longitude: 116.09353617558172,
-    priceRange: "$$",
-    status: "Open",
-    rating: 4.5,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    images: [
-      {
-        id: 1,
-        url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
-        isPrimary: true,
-        order: 1,
-      },
-      {
-        id: 2,
-        url: "https://picsum.photos/400/300?random=2",
-        isPrimary: false,
-        order: 2,
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "The Green Garden",
-    description: "Vegetarian-friendly cafe with organic dishes.",
-    address: "456 Leaf Ave, Townsville",
-    latitude: 5.963939157055727,
-    longitude: 116.09410798364631,
-    priceRange: "$$$",
-    status: "Closed",
-    rating: 3,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    images: [
-      {
-        id: 3,
-        url: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400",
-        isPrimary: true,
-        order: 1,
-      },
-      {
-        id: 4,
-        url: "https://picsum.photos/400/300?random=4",
-        isPrimary: false,
-        order: 2,
-      },
-      {
-        id: 5,
-        url: "https://picsum.photos/400/300?random=5",
-        isPrimary: false,
-        order: 3,
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Oceanview Diner",
-    description: "Seafood restaurant with a scenic ocean view.",
-    address: "789 Bay Rd, Seaville",
-    latitude: 5.964766902408113,
-    longitude: 116.09300850264972,
-    priceRange: "$$$$",
-    status: "Open",
-    rating: 5.0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    images: [
-      {
-        id: 6,
-        url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=4006",
-        isPrimary: true,
-        order: 1,
-      },
-      {
-        id: 7,
-        url: "https://picsum.photos/400/300?random=7",
-        isPrimary: false,
-        order: 2,
-      },
-    ],
-  },
-];
+// const places = [
+//   {
+//     id: 1,
+//     name: "Sunrise Coffee",
+//     description: "Cozy coffee shop with great pastries.",
+//     address: "123 Morning St, Cityville",
+//     latitude: 5.965418758200848,
+//     longitude: 116.09353617558172,
+//     priceRange: "$$",
+//     status: "Open",
+//     rating: 4.5,
+//     createdAt: new Date(),
+//     updatedAt: new Date(),
+//     images: [
+//       {
+//         id: 1,
+//         url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
+//         isPrimary: true,
+//         order: 1,
+//       },
+//       {
+//         id: 2,
+//         url: "https://picsum.photos/400/300?random=2",
+//         isPrimary: false,
+//         order: 2,
+//       },
+//     ],
+//   },
+//   {
+//     id: 2,
+//     name: "The Green Garden",
+//     description: "Vegetarian-friendly cafe with organic dishes.",
+//     address: "456 Leaf Ave, Townsville",
+//     latitude: 5.963939157055727,
+//     longitude: 116.09410798364631,
+//     priceRange: "$$$",
+//     status: "Closed",
+//     rating: 3,
+//     createdAt: new Date(),
+//     updatedAt: new Date(),
+//     images: [
+//       {
+//         id: 3,
+//         url: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400",
+//         isPrimary: true,
+//         order: 1,
+//       },
+//       {
+//         id: 4,
+//         url: "https://picsum.photos/400/300?random=4",
+//         isPrimary: false,
+//         order: 2,
+//       },
+//       {
+//         id: 5,
+//         url: "https://picsum.photos/400/300?random=5",
+//         isPrimary: false,
+//         order: 3,
+//       },
+//     ],
+//   },
+//   {
+//     id: 3,
+//     name: "Oceanview Diner",
+//     description: "Seafood restaurant with a scenic ocean view.",
+//     address: "789 Bay Rd, Seaville",
+//     latitude: 5.964766902408113,
+//     longitude: 116.09300850264972,
+//     priceRange: "$$$$",
+//     status: "Open",
+//     rating: 5.0,
+//     createdAt: new Date(),
+//     updatedAt: new Date(),
+//     images: [
+//       {
+//         id: 6,
+//         url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=4006",
+//         isPrimary: true,
+//         order: 1,
+//       },
+//       {
+//         id: 7,
+//         url: "https://picsum.photos/400/300?random=7",
+//         isPrimary: false,
+//         order: 2,
+//       },
+//     ],
+//   },
+// ];
 
 export default function App() {
+  const { data, error, isLoading } = useQuery<Place[], Error>({
+    queryKey: ["allPlaces"],
+    queryFn: fetchAllPlaces,
+  });
+
+  const places = data ?? [];
+
   const { location, loading } = useLocationContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [ filterValues, setFilterValues] = useState<Filters>({
+  const [filterValues, setFilterValues] = useState<Filters>({
     cuisine: [],
     priceIndex: 1,
     rating: 4,
-    openNow: true
+    openNow: true,
   });
 
   const colorScheme = useColorScheme() ?? "light";
@@ -116,8 +126,8 @@ export default function App() {
   const isDark = colorScheme === "dark";
 
   const selectedPlace = useMemo(
-    () => places.find((p) => p.id === selectedId),
-    [selectedId]
+    () => places.find((p) => Number(p.id) === selectedId),
+    [selectedId],
   );
 
   if (loading || !location) {
@@ -157,7 +167,7 @@ export default function App() {
             onPress={() => setSelectedId(place.id)}
             anchor={{ x: 0.5, y: 1 }}
           >
-            {selectedId === place.id ? (
+            {selectedId === Number(place.id) ? (
               <View style={{ transform: [{ scale: 1.0 }] }}>
                 <SelectedPlaceMarker />
               </View>
@@ -170,8 +180,6 @@ export default function App() {
           </Marker>
         ))}
       </MapView>
-
-
 
       <View
         style={[
@@ -194,7 +202,10 @@ export default function App() {
           style={[styles.searchInput, { color: theme.text }]}
           placeholderTextColor={theme.secondaryText}
         />
-        <Pressable style={styles.filterButton} onPress={() => setFilterVisible(!filterVisible)}>
+        <Pressable
+          style={styles.filterButton}
+          onPress={() => setFilterVisible(!filterVisible)}
+        >
           <IconSymbol name="filter" size={20} color={theme.text} />
         </Pressable>
       </View>
@@ -210,7 +221,7 @@ export default function App() {
               status: selectedPlace.status,
               image:
                 selectedPlace.images.find((img) => img.isPrimary)?.url ??
-                selectedPlace.images[0].url,
+                selectedPlace.images[0]?.url,
             }}
           />
         </View>
@@ -219,9 +230,9 @@ export default function App() {
       <FilterPanel
         visible={filterVisible}
         onClose={() => setFilterVisible(false)}
-        value = {filterValues}
-        onChange = {setFilterValues}
-        />
+        value={filterValues}
+        onChange={setFilterValues}
+      />
     </View>
   );
 }
@@ -273,9 +284,9 @@ const styles = StyleSheet.create({
     color: "green",
   },
 
-    searchContainer: {
-      flexDirection: "row",
-      alignItems: "center",
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     position: "absolute",
     top: 50,
     left: 16,
@@ -284,7 +295,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingHorizontal: 20,
     paddingVertical: 4,
-    elevation: 3, 
+    elevation: 3,
     shadowColor: "#000",
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
