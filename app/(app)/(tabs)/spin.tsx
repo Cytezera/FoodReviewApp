@@ -9,15 +9,9 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const ITEMS = [
-  "Pizza",
-  "Burger",
-  "Sushi",
-  "Tacos",
-  "Pasta",
-  "Salad",
-];
+const ITEMS = ["Pizza", "Burger", "Sushi", "Tacos", "Pasta", "Salad"];
 
 const WHEEL_SIZE = 260;
 const SPIN_DURATION = 3000;
@@ -44,9 +38,7 @@ export default function WheelSpinner() {
     }).start(() => {
       const segmentAngle = 360 / ITEMS.length;
       const index =
-        ITEMS.length -
-        1 -
-        Math.floor((randomAngle % 360) / segmentAngle);
+        ITEMS.length - 1 - Math.floor((randomAngle % 360) / segmentAngle);
 
       setResult(ITEMS[index]);
     });
@@ -58,63 +50,57 @@ export default function WheelSpinner() {
   });
 
   return (
-    <View style={styles.container}>
-      {/* Pointer */}
-      <View style={[styles.pointer, { borderBottomColor: theme.tint }]} />
+    <SafeAreaView>
+      <View style={styles.container}>
+        {/* Pointer */}
+        <View style={[styles.pointer, { borderBottomColor: theme.tint }]} />
 
-      {/* Wheel */}
-      <Animated.View
-        style={[
-          styles.wheel,
-          {
-            backgroundColor: theme.cardBackground,
-            transform: [{ rotate: rotateInterpolate }],
-          },
-        ]}
-      >
-        {ITEMS.map((item, index) => {
-          const angle = (360 / ITEMS.length) * index;
-          return (
-            <View
-              key={item}
-              style={[
-                styles.segment,
-                { transform: [{ rotate: `${angle}deg` }] },
-              ]}
-            >
-              <Text
+        {/* Wheel */}
+        <Animated.View
+          style={[
+            styles.wheel,
+            {
+              backgroundColor: theme.cardBackground,
+              transform: [{ rotate: rotateInterpolate }],
+            },
+          ]}
+        >
+          {ITEMS.map((item, index) => {
+            const angle = (360 / ITEMS.length) * index;
+            return (
+              <View
+                key={item}
                 style={[
-                  styles.segmentText,
-                  { color: theme.text },
+                  styles.segment,
+                  { transform: [{ rotate: `${angle}deg` }] },
                 ]}
               >
-                {item}
-              </Text>
-            </View>
-          );
-        })}
-      </Animated.View>
+                <Text style={[styles.segmentText, { color: theme.text }]}>
+                  {item}
+                </Text>
+              </View>
+            );
+          })}
+        </Animated.View>
 
-      {/* Spin Button */}
-      <Pressable
-        style={[
-          styles.button,
-          { backgroundColor: theme.buttonBackground },
-        ]}
-        onPress={spinWheel}
-      >
-        <Text style={{ color: theme.buttonText, fontWeight: "600" }}>
-          SPIN
-        </Text>
-      </Pressable>
+        {/* Spin Button */}
+        <Pressable
+          style={[styles.button, { backgroundColor: theme.buttonBackground }]}
+          onPress={spinWheel}
+        >
+          <Text style={{ color: theme.buttonText, fontWeight: "600" }}>
+            SPIN
+          </Text>
+        </Pressable>
 
-      {/* Result */}
-      {result && (
-        <Text style={[styles.result, { color: theme.boldText }]}>
-          🎉 {result}
-        </Text>
-      )}
-    </View>
+        {/* Result */}
+        {result && (
+          <Text style={[styles.result, { color: theme.boldText }]}>
+            🎉 {result}
+          </Text>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
