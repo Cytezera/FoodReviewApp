@@ -1,46 +1,45 @@
-import { Colors } from "@/constants/theme";
 import React, { useRef, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Pressable,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import Svg, { G, Path, Text as SvgText } from "react-native-svg";
 
-const ITEMS = ["Pizza", "Burger", "Sushi", "Tacos", "Pasta", "Salad"];
-
-const WHEEL_SIZE = 260;
+const ITEMS = ["ABc", "Burger", "Sushi", "Tacos"];
+const WHEEL_SIZE = 300;
 const SPIN_DURATION = 3000;
 
-export default function WheelSpinner() {
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Colors[colorScheme];
-
+export default function SvgWheelSpinner() {
+  const currentAngle = useRef(0);
   const rotation = useRef(new Animated.Value(0)).current;
   const [result, setResult] = useState<string | null>(null);
 
+  // Spin the wheel
   const spinWheel = () => {
     setResult(null);
+    const spins = 10;
+    const winningIndex = Math.floor(Math.random() * ITEMS.length);
 
-    const spins = Math.floor(Math.random() * 4) + 4; // 4–7 spins
-    const randomAngle = Math.random() * 360;
-    const finalAngle = spins * 360 + randomAngle;
+    const segmentAngle = 360 / ITEMS.length;
+    const winningAngle =
+      360 - ((winningIndex + 1) * segmentAngle - segmentAngle / 2);
+    const finalAngle =
+      winningAngle +
+      360 * 7 +
+      currentAngle.current +
+      (360 - (currentAngle.current % 360));
+
+    currentAngle.current = finalAngle;
+
+    console.log(`current angle: ${currentAngle.current}`);
+    console.log(winningIndex);
+    console.log(winningAngle);
+    console.log(finalAngle);
+    // const finalAngle = spins * 360 + randomAngle;
 
     Animated.timing(rotation, {
       toValue: finalAngle,
       duration: SPIN_DURATION,
-      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start(() => {
-      const segmentAngle = 360 / ITEMS.length;
-      const index =
-        ITEMS.length - 1 - Math.floor((randomAngle % 360) / segmentAngle);
-
-      setResult(ITEMS[index]);
+      setResult(ITEMS[winningIndex]);
     });
   };
 
@@ -49,88 +48,66 @@ export default function WheelSpinner() {
     outputRange: ["0deg", "360deg"],
   });
 
+  //
+  const createArc = (startAngle: number, endAngle: number) => {
+    const radius = WHEEL_SIZE / 2;
+    const x1 = radius + radius * Math.cos((Math.PI * startAngle) / 180);
+    const y1 = radius + radius * Math.sin((Math.PI * startAngle) / 180);
+    const x2 = radius + radius * Math.cos((Math.PI * endAngle) / 180);
+    const y2 = radius + radius * Math.sin((Math.PI * endAngle) / 180);
+
+    const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+    return `M${radius},${radius} L${x1},${y1} A${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2} Z`;
+  };
+
   return (
-    <SafeAreaView>
-      <View style={styles.container}>
-        {/* Pointer */}
-        <View style={[styles.pointer, { borderBottomColor: theme.tint }]} />
+    <View style={styles.container}>
+      <View style={styles.pointer} />
 
-        {/* Wheel */}
-        <Animated.View
-          style={[
-            styles.wheel,
-            {
-              backgroundColor: theme.cardBackground,
-              transform: [{ rotate: rotateInterpolate }],
-            },
-          ]}
-        >
-          {ITEMS.map((item, index) => {
-            const angle = (360 / ITEMS.length) * index;
-            return (
-              <View
-                key={item}
-                style={[
-                  styles.segment,
-                  { transform: [{ rotate: `${angle}deg` }] },
-                ]}
-              >
-                <Text style={[styles.segmentText, { color: theme.text }]}>
-                  {item}
-                </Text>
-              </View>
-            );
-          })}
-        </Animated.View>
+      <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+        <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
+          <G>
+            {ITEMS.map((item, index) => {
+              const segmentAngle = 360 / ITEMS.length;
+              const start = index * segmentAngle;
+              const end = start + segmentAngle;
 
-        {/* Spin Button */}
-        <Pressable
-          style={[styles.button, { backgroundColor: theme.buttonBackground }]}
-          onPress={spinWheel}
-        >
-          <Text style={{ color: theme.buttonText, fontWeight: "600" }}>
-            SPIN
-          </Text>
-        </Pressable>
+              return (
+                <G key={item}>
+                  <Path
+                    d={createArc(start, end)}
+                    fill={index % 2 === 0 ? "#ff6666" : "#66ccff"}
+                  />
+                  <SvgText
+                    x={WHEEL_SIZE / 2}
+                    y={WHEEL_SIZE / 2}
+                    fill="#000"
+                    fontSize="14"
+                    fontWeight="bold"
+                    textAnchor="middle"
+                    alignmentBaseline="middle"
+                    transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
+                  >
+                    {item}
+                  </SvgText>
+                </G>
+              );
+            })}
+          </G>
+        </Svg>
+      </Animated.View>
 
-        {/* Result */}
-        {result && (
-          <Text style={[styles.result, { color: theme.boldText }]}>
-            🎉 {result}
-          </Text>
-        )}
-      </View>
-    </SafeAreaView>
+      <Pressable style={styles.button} onPress={spinWheel}>
+        <Text style={styles.buttonText}>SPIN</Text>
+      </Pressable>
+
+      {result && <Text style={styles.result}>🎉 {result}</Text>}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 20,
-  },
-  wheel: {
-    width: WHEEL_SIZE,
-    height: WHEEL_SIZE,
-    borderRadius: WHEEL_SIZE / 2,
-    borderWidth: 4,
-    borderColor: "#ccc",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  segment: {
-    position: "absolute",
-    width: "50%",
-    height: "50%",
-    justifyContent: "center",
-    alignItems: "flex-end",
-    paddingRight: 12,
-  },
-  segmentText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
   pointer: {
     width: 0,
     height: 0,
@@ -139,16 +116,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 20,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
-    marginBottom: -10,
+    borderBottomColor: "#000",
     zIndex: 10,
+    marginBottom: -10,
   },
   button: {
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 24,
+    marginTop: 30,
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    backgroundColor: "#007bff",
+    borderRadius: 20,
   },
-  result: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
+  buttonText: { color: "#fff", fontWeight: "bold" },
+  result: { marginTop: 20, fontSize: 20, fontWeight: "bold" },
 });
