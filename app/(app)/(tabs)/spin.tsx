@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { G, Path, Text as SvgText } from "react-native-svg";
 
-const ITEMS = ["ABc", "Burger", "Sushi", "Tacos"];
+const ITEMS = ["Steak", "Burger", "Sushi", "Tacos"];
 const WHEEL_SIZE = 300;
 const SPIN_DURATION = 3000;
 
@@ -67,6 +67,46 @@ export default function SvgWheelSpinner() {
       <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
         <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
           <G>
+            {/* Render all paths first */}
+            {ITEMS.map((item, index) => {
+              const segmentAngle = 360 / ITEMS.length;
+              const start = index * segmentAngle;
+              const end = start + segmentAngle;
+              return (
+                <Path
+                  key={`path-${item}`}
+                  d={createArc(start, end)}
+                  fill={index % 2 === 0 ? "#ff6666" : "#66ccff"}
+                />
+              );
+            })}
+
+            {/* Render all text on top */}
+            {ITEMS.map((item, index) => {
+              const segmentAngle = 360 / ITEMS.length;
+              const start = index * segmentAngle;
+              return (
+                <SvgText
+                  key={`text-${item}`}
+                  x={WHEEL_SIZE / 2}
+                  y={WHEEL_SIZE / 2}
+                  fill="#000"
+                  fontSize="14"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  alignmentBaseline="middle"
+                  transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4}) `}
+                >
+                  {item}
+                </SvgText>
+              );
+            })}
+          </G>
+        </Svg>
+      </Animated.View>
+      {/* <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+        <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
+          <G>
             {ITEMS.map((item, index) => {
               const segmentAngle = 360 / ITEMS.length;
               const start = index * segmentAngle;
@@ -86,7 +126,8 @@ export default function SvgWheelSpinner() {
                     fontWeight="bold"
                     textAnchor="middle"
                     alignmentBaseline="middle"
-                    transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
+                    // transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
+                    transform={`rotate(${start}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
                   >
                     {item}
                   </SvgText>
@@ -95,7 +136,7 @@ export default function SvgWheelSpinner() {
             })}
           </G>
         </Svg>
-      </Animated.View>
+      </Animated.View> */}
 
       <Pressable style={styles.button} onPress={spinWheel}>
         <Text style={styles.buttonText}>SPIN</Text>
