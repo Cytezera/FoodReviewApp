@@ -1,3 +1,7 @@
+import { PlaceDetailCard } from "@/components/ui/Card";
+import { fetchAllPlaces } from "@/services/placeService";
+import { Place } from "@/types/place";
+import { useQuery } from "@tanstack/react-query";
 import React, { useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { G, Path, Text as SvgText } from "react-native-svg";
@@ -7,9 +11,14 @@ const WHEEL_SIZE = 300;
 const SPIN_DURATION = 3000;
 
 export default function SvgWheelSpinner() {
+  const { data, error, isLoading } = useQuery<Place[], Error>({
+    queryKey: ["allPlaces"],
+    queryFn: fetchAllPlaces,
+  });
+  const places = data ?? [];
   const currentAngle = useRef(0);
   const rotation = useRef(new Animated.Value(0)).current;
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<Place | null>(null);
 
   // Spin the wheel
   const spinWheel = () => {
@@ -17,29 +26,31 @@ export default function SvgWheelSpinner() {
     const spins = 10;
     const winningIndex = Math.floor(Math.random() * ITEMS.length);
 
-    const segmentAngle = 360 / ITEMS.length;
+    const segmentAngle = 360 / places.length;
     const winningAngle =
       360 - ((winningIndex + 1) * segmentAngle - segmentAngle / 2);
+    // 360 - ((winningIndex + 1) * segmentAngle - segmentAngle / 2);
     const finalAngle =
       winningAngle +
       360 * 7 +
       currentAngle.current +
       (360 - (currentAngle.current % 360));
 
+    console.log(360 - (currentAngle.current % 360));
     currentAngle.current = finalAngle;
 
-    console.log(`current angle: ${currentAngle.current}`);
-    console.log(winningIndex);
-    console.log(winningAngle);
-    console.log(finalAngle);
+    // console.log(`current angle: ${currentAngle.current}`);
     // const finalAngle = spins * 360 + randomAngle;
+    console.log(finalAngle);
+    console.log(winningAngle);
+    console.log(winningIndex);
 
     Animated.timing(rotation, {
       toValue: finalAngle,
       duration: SPIN_DURATION,
       useNativeDriver: true,
     }).start(() => {
-      setResult(ITEMS[winningIndex]);
+      setResult(places[winningIndex]);
     });
   };
 
@@ -66,28 +77,30 @@ export default function SvgWheelSpinner() {
 
       <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
         <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
-          <G>
+          <G transform={`rotate(-90 ${WHEEL_SIZE / 2} ${WHEEL_SIZE / 2})`}>
             {/* Render all paths first */}
-            {ITEMS.map((item, index) => {
-              const segmentAngle = 360 / ITEMS.length;
+            {places.map((place, index) => {
+              const segmentAngle = 360 / places.length;
               const start = index * segmentAngle;
               const end = start + segmentAngle;
+              const COLORS = ["#ff6666", "#66ccff", "#66ff99"];
               return (
                 <Path
-                  key={`path-${item}`}
+                  key={`path-${place.id}`}
                   d={createArc(start, end)}
-                  fill={index % 2 === 0 ? "#ff6666" : "#66ccff"}
+                  fill={COLORS[(index * 7 + 3) % COLORS.length]}
+                  // fill={index % 2 === 0 ? "#ff6666" : "#66ccff"}
                 />
               );
             })}
 
             {/* Render all text on top */}
-            {ITEMS.map((item, index) => {
-              const segmentAngle = 360 / ITEMS.length;
+            {places.map((place, index) => {
+              const segmentAngle = 360 / places.length;
               const start = index * segmentAngle;
               return (
                 <SvgText
-                  key={`text-${item}`}
+                  key={`text-${place.id}`}
                   x={WHEEL_SIZE / 2}
                   y={WHEEL_SIZE / 2}
                   fill="#000"
@@ -95,9 +108,10 @@ export default function SvgWheelSpinner() {
                   fontWeight="bold"
                   textAnchor="middle"
                   alignmentBaseline="middle"
-                  transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4}) `}
+                  // transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4}) `}
+                  transform={`rotate(${start + segmentAngle / 2 + 90} , ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4}) `}
                 >
-                  {item}
+                  {place.name}
                 </SvgText>
               );
             })}
@@ -141,8 +155,22 @@ export default function SvgWheelSpinner() {
       <Pressable style={styles.button} onPress={spinWheel}>
         <Text style={styles.buttonText}>SPIN</Text>
       </Pressable>
-
-      {result && <Text style={styles.result}>🎉 {result}</Text>}
+      {result && (
+        <View style={styles.bottomCard}>
+          <PlaceDetailCard
+            place={{
+              name: result.name,
+              description: result.description,
+              rating: result.rating,
+              priceRange: result.priceRange,
+              status: result.status,
+              image:
+                result.images.find((img) => img.isPrimary)?.url ??
+                result.images[0]?.url,
+            }}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -170,4 +198,11 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: "#fff", fontWeight: "bold" },
   result: { marginTop: 20, fontSize: 20, fontWeight: "bold" },
+
+  bottomCard: {
+    position: "absolute",
+    bottom: 24,
+    left: 16,
+    right: 16,
+  },
 });
