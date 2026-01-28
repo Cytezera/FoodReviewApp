@@ -8,9 +8,17 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { fetchAllPlaces } from "@/services/placeService";
 import { Filters } from "@/types/filter";
 import { Place } from "@/types/place";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 // const places = [
@@ -130,8 +138,50 @@ export default function App() {
     [selectedId],
   );
 
+  // if (loading || !location) {
+  //   return <View style={styles.container} />;
+  // }
+
   if (loading || !location) {
-    return <View style={styles.container} />;
+    return (
+      <View style={styles.content}>
+        {/* Illustration Card */}
+        <View style={styles.illustrationCard}>
+          {/* Decorative Lines */}
+          <View style={styles.decorativeLineSmall} />
+          <View style={styles.decorativeLineMedium} />
+          <View style={styles.decorativeLineTiny} />
+
+          <View style={styles.iconWrapper}>
+            <MaterialIcons
+              name="person-search"
+              size={120}
+              color="rgba(45,41,38,0.8)"
+            />
+
+            <View style={styles.badge}>
+              <MaterialIcons name="question-mark" size={24} color="#2D2926" />
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.error_title}>Oops! We can't find you</Text>
+
+        <Text style={styles.error_subtitle}>
+          We're having trouble getting your location. Please check your GPS
+          settings or try again.
+        </Text>
+
+        <TouchableOpacity style={styles.primaryButton}>
+          <MaterialIcons name="refresh" size={20} color="#2D2926" />
+          <Text style={styles.primaryButtonText}>Refresh Location</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+          <Text style={styles.secondaryAction}>Enter Location Manually</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
@@ -315,5 +365,148 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginLeft: "auto",
+  },
+
+  error_container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingBottom: 96,
+  },
+
+  illustrationCard: {
+    width: 320,
+    height: 320,
+    backgroundColor: "#F2EBE3",
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+    overflow: "hidden",
+  },
+
+  decorativeLineSmall: {
+    position: "absolute",
+    top: 40,
+    left: 40,
+    width: 120,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#2D2926",
+    opacity: 0.1,
+  },
+
+  decorativeLineMedium: {
+    position: "absolute",
+    top: 80,
+    left: 80,
+    width: 180,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#2D2926",
+    opacity: 0.1,
+  },
+
+  decorativeLineTiny: {
+    position: "absolute",
+    bottom: 80,
+    left: 40,
+    width: 90,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#2D2926",
+    opacity: 0.1,
+  },
+
+  iconWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  badge: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFB800",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 4,
+    borderColor: "#FFFFFF",
+    elevation: 6,
+  },
+
+  error_title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#2D2926",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+
+  error_subtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 22,
+    maxWidth: 280,
+    marginBottom: 32,
+  },
+
+  primaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 56,
+    width: "100%",
+    maxWidth: 280,
+    backgroundColor: "#FFB800",
+    borderRadius: 999,
+    gap: 8,
+    elevation: 4,
+  },
+
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2D2926",
+  },
+
+  secondaryAction: {
+    marginTop: 24,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#9CA3AF",
+  },
+
+  navItem: {
+    alignItems: "center",
+    gap: 4,
+  },
+
+  navLabel: {
+    fontSize: 10,
+    color: "#9CA3AF",
+    fontWeight: "500",
+  },
+
+  navLabelActive: {
+    color: "#f45925",
+    fontWeight: "700",
+  },
+
+  activeNavIcon: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(244,89,37,0.1)",
   },
 });

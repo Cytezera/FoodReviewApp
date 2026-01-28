@@ -29,23 +29,21 @@ const styles = StyleSheet.create({
   },
 });
 
-
 type Props = {
   place: {
-    name: string
-    description: string
-    rating: number
-    priceRange: string
-    status: string
-    image: string
-  }
-}
+    name: string;
+    description: string;
+    rating: number;
+    priceRange: string;
+    status: string;
+    image: string;
+  };
+};
 
 export function PlaceDetailCard({ place }: Props) {
   return (
     <View style={placeStyles.wrapper}>
       <Card style={placeStyles.card}>
-
         {/* Handle */}
         <View style={placeStyles.handleWrapper}>
           <View style={placeStyles.handle} />
@@ -54,7 +52,7 @@ export function PlaceDetailCard({ place }: Props) {
         {/* Content */}
         <View style={placeStyles.row}>
           <View style={placeStyles.image}>
-            <Image source={{ uri: place.image }}  style={placeStyles.image}/>
+            <Image source={{ uri: place.image }} style={placeStyles.image} />
           </View>
 
           <View style={placeStyles.details}>
@@ -84,10 +82,9 @@ export function PlaceDetailCard({ place }: Props) {
             <Text style={placeStyles.secondaryText}>View Details</Text>
           </View>
         </View>
-
       </Card>
     </View>
-  )
+  );
 }
 const placeStyles = StyleSheet.create({
   wrapper: {
@@ -173,5 +170,87 @@ const placeStyles = StyleSheet.create({
   secondaryText: {
     fontWeight: "700",
   },
-})
+});
 
+type PlaceHistoryProps = {
+  place: {
+    name: string;
+    description: string;
+    rating: number;
+    image: string;
+  };
+};
+
+export function PlaceHistoryCard({ place }: PlaceHistoryProps) {
+  return (
+    <Card style={historyStyles.card}>
+      <View style={historyStyles.row}>
+        {/* Image with rating badge */}
+        <View style={historyStyles.imageWrapper}>
+          <Image source={{ uri: place.image }} style={historyStyles.image} />
+          <View style={historyStyles.ratingBadge}>
+            <Text style={historyStyles.ratingText}>⭐ {place.rating}</Text>
+          </View>
+        </View>
+
+        {/* Name & description */}
+        <View style={historyStyles.details}>
+          <Text style={historyStyles.name} numberOfLines={1}>
+            {place.name}
+          </Text>
+          <Text style={historyStyles.description} numberOfLines={2}>
+            {place.description}
+          </Text>
+        </View>
+      </View>
+    </Card>
+  );
+}
+
+const historyStyles = StyleSheet.create({
+  card: {
+    borderRadius: 20,
+    padding: 12,
+    marginBottom: 12,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  imageWrapper: {
+    position: "relative",
+  },
+  image: {
+    width: 96,
+    height: 96,
+    borderRadius: 16,
+    backgroundColor: "#DDD",
+  },
+  ratingBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  ratingText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  details: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  description: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+});

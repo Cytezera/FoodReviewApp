@@ -1,49 +1,85 @@
-import { PlaceDetailCard } from "@/components/ui/Card";
-import { fetchAllPlaces } from "@/services/placeService";
+import { PlaceHistoryCard } from "@/components/ui/Card";
+import { useSession } from "@/contexts/AuthContext";
+import { fetchAllPlaces, fetchWheelHistory } from "@/services/placeService";
 import { Place } from "@/types/place";
 import { useQuery } from "@tanstack/react-query";
-import React, { useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import Svg, { G, Path, Text as SvgText } from "react-native-svg";
 
-const ITEMS = ["Steak", "Burger", "Sushi", "Tacos"];
 const WHEEL_SIZE = 300;
 const SPIN_DURATION = 3000;
+const COLORS = ["#ff6666", "#66ccff", "#66ff99"];
+
+type Phase = "idle" | "spinning" | "result";
 
 export default function SvgWheelSpinner() {
-  const { data, error, isLoading } = useQuery<Place[], Error>({
+  const { user, isLoading } = useSession();
+
+  const { data: wheelHistory } = useQuery<Place[]>({
+    queryKey: ["wheelHistory", user?.id],
+    queryFn: () => fetchWheelHistory(Number(user?.id)),
+    enabled: !!user?.id,
+  });
+
+  const { data: allPlaces } = useQuery<Place[]>({
     queryKey: ["allPlaces"],
     queryFn: fetchAllPlaces,
   });
-  const places = data ?? [];
-  const currentAngle = useRef(0);
-  const rotation = useRef(new Animated.Value(0)).current;
+
+  const places = allPlaces ?? [];
+
+  const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<Place | null>(null);
 
-  // Spin the wheel
-  const spinWheel = () => {
-    setResult(null);
-    const spins = 10;
-    const winningIndex = Math.floor(Math.random() * ITEMS.length);
+  const rotation = useRef(new Animated.Value(0)).current;
+  const currentAngle = useRef(0);
 
-    const segmentAngle = 360 / places.length;
+  const bottomAnim = useRef(new Animated.Value(0)).current;
+
+  const segmentAngle = places.length ? 360 / places.length : 0;
+
+  const rotateInterpolate = rotation.interpolate({
+    inputRange: [0, 360],
+    outputRange: ["0deg", "360deg"],
+  });
+
+  const bottomTranslate = bottomAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 220],
+  });
+
+  const spinWheel = () => {
+    if (!places.length) return;
+
+    setPhase("spinning");
+    setResult(null);
+
+    Animated.timing(bottomAnim, {
+      toValue: 1,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+
+    const winningIndex = Math.floor(Math.random() * places.length);
+
     const winningAngle =
       360 - ((winningIndex + 1) * segmentAngle - segmentAngle / 2);
-    // 360 - ((winningIndex + 1) * segmentAngle - segmentAngle / 2);
+
     const finalAngle =
       winningAngle +
-      360 * 7 +
+      360 * 6 +
       currentAngle.current +
       (360 - (currentAngle.current % 360));
 
-    console.log(360 - (currentAngle.current % 360));
     currentAngle.current = finalAngle;
-
-    // console.log(`current angle: ${currentAngle.current}`);
-    // const finalAngle = spins * 360 + randomAngle;
-    console.log(finalAngle);
-    console.log(winningAngle);
-    console.log(winningIndex);
 
     Animated.timing(rotation, {
       toValue: finalAngle,
@@ -51,65 +87,72 @@ export default function SvgWheelSpinner() {
       useNativeDriver: true,
     }).start(() => {
       setResult(places[winningIndex]);
+      setPhase("result");
+
+      Animated.timing(bottomAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     });
   };
 
-  const rotateInterpolate = rotation.interpolate({
-    inputRange: [0, 360],
-    outputRange: ["0deg", "360deg"],
-  });
+  const createArc = (start: number, end: number) => {
+    const r = WHEEL_SIZE / 2;
+    const x1 = r + r * Math.cos((Math.PI * start) / 180);
+    const y1 = r + r * Math.sin((Math.PI * start) / 180);
+    const x2 = r + r * Math.cos((Math.PI * end) / 180);
+    const y2 = r + r * Math.sin((Math.PI * end) / 180);
+    const large = end - start > 180 ? 1 : 0;
 
-  //
-  const createArc = (startAngle: number, endAngle: number) => {
-    const radius = WHEEL_SIZE / 2;
-    const x1 = radius + radius * Math.cos((Math.PI * startAngle) / 180);
-    const y1 = radius + radius * Math.sin((Math.PI * startAngle) / 180);
-    const x2 = radius + radius * Math.cos((Math.PI * endAngle) / 180);
-    const y2 = radius + radius * Math.sin((Math.PI * endAngle) / 180);
-
-    const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
-    return `M${radius},${radius} L${x1},${y1} A${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2} Z`;
+    return `M${r},${r} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`;
   };
+
+  const sliceColors = useMemo(
+    () => places.map((_, i) => COLORS[(i * 7 + 3) % COLORS.length]),
+    [places.length],
+  );
 
   return (
     <View style={styles.container}>
+      {/* Pointer */}
       <View style={styles.pointer} />
 
+      {/* Wheel */}
       <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
         <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
           <G transform={`rotate(-90 ${WHEEL_SIZE / 2} ${WHEEL_SIZE / 2})`}>
-            {/* Render all paths first */}
-            {places.map((place, index) => {
-              const segmentAngle = 360 / places.length;
-              const start = index * segmentAngle;
+            {places.map((place, i) => {
+              const start = i * segmentAngle;
               const end = start + segmentAngle;
-              const COLORS = ["#ff6666", "#66ccff", "#66ff99"];
+
               return (
                 <Path
-                  key={`path-${place.id}`}
+                  key={place.id}
                   d={createArc(start, end)}
-                  fill={COLORS[(index * 7 + 3) % COLORS.length]}
-                  // fill={index % 2 === 0 ? "#ff6666" : "#66ccff"}
+                  fill={sliceColors[i]}
+                  stroke="#fff"
+                  strokeWidth={1.5}
                 />
               );
             })}
 
-            {/* Render all text on top */}
-            {places.map((place, index) => {
-              const segmentAngle = 360 / places.length;
-              const start = index * segmentAngle;
+            {places.map((place, i) => {
+              const start = i * segmentAngle;
+
               return (
                 <SvgText
                   key={`text-${place.id}`}
                   x={WHEEL_SIZE / 2}
                   y={WHEEL_SIZE / 2}
                   fill="#000"
-                  fontSize="14"
+                  fontSize={14}
                   fontWeight="bold"
                   textAnchor="middle"
                   alignmentBaseline="middle"
-                  // transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4}) `}
-                  transform={`rotate(${start + segmentAngle / 2 + 90} , ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4}) `}
+                  transform={`rotate(${start + segmentAngle / 2 + 90} ${
+                    WHEEL_SIZE / 2
+                  } ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
                 >
                   {place.name}
                 </SvgText>
@@ -118,65 +161,75 @@ export default function SvgWheelSpinner() {
           </G>
         </Svg>
       </Animated.View>
-      {/* <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-        <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
-          <G>
-            {ITEMS.map((item, index) => {
-              const segmentAngle = 360 / ITEMS.length;
-              const start = index * segmentAngle;
-              const end = start + segmentAngle;
-
-              return (
-                <G key={item}>
-                  <Path
-                    d={createArc(start, end)}
-                    fill={index % 2 === 0 ? "#ff6666" : "#66ccff"}
-                  />
-                  <SvgText
-                    x={WHEEL_SIZE / 2}
-                    y={WHEEL_SIZE / 2}
-                    fill="#000"
-                    fontSize="14"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                    alignmentBaseline="middle"
-                    // transform={`rotate(${start + segmentAngle / 2}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
-                    transform={`rotate(${start}, ${WHEEL_SIZE / 2}, ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
-                  >
-                    {item}
-                  </SvgText>
-                </G>
-              );
-            })}
-          </G>
-        </Svg>
-      </Animated.View> */}
 
       <Pressable style={styles.button} onPress={spinWheel}>
-        <Text style={styles.buttonText}>SPIN</Text>
+        <Text style={styles.buttonText}>SPIN NOW</Text>
       </Pressable>
-      {result && (
-        <View style={styles.bottomCard}>
-          <PlaceDetailCard
-            place={{
-              name: result.name,
-              description: result.description,
-              rating: result.rating,
-              priceRange: result.priceRange,
-              status: result.status,
-              image:
-                result.images.find((img) => img.isPrimary)?.url ??
-                result.images[0]?.url,
-            }}
-          />
-        </View>
-      )}
+
+      {/* Bottom Section */}
+      <Animated.View
+        style={[
+          styles.bottomSection,
+          { transform: [{ translateY: bottomTranslate }] },
+        ]}
+      >
+        {phase === "idle" && <RecentWinners wheelHistory={wheelHistory} />}
+        {phase === "result" && result && <WinnerCard result={result} />}
+      </Animated.View>
+
+      {/* Spin Button */}
     </View>
   );
 }
 
+/* ---------- Subcomponents ---------- */
+
+const RecentWinners = ({ wheelHistory }: { wheelHistory?: Place[] }) => (
+  <View>
+    <Text style={styles.sectionTitle}>Recent Winners</Text>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      {/* {["Sushi", "Burger", "Tacos", "Steak"].map((item, i) => (
+        <View key={i} style={styles.winnerChip}>
+          <Text>{item}</Text>
+        </View>
+      ))} */}
+
+      {wheelHistory?.map((place, index) => {
+        return (
+          <PlaceHistoryCard
+            key={index}
+            place={{
+              name: place.place.name,
+              description: "Hey",
+              rating: 4.8,
+              // image: "https://example.com/sushi.jpg",
+              image:
+                place.place.images.find((img) => img.isPrimary)?.url ??
+                place.place.images[0]?.url,
+            }}
+          />
+        );
+      })}
+    </ScrollView>
+  </View>
+);
+
+const WinnerCard = ({ result }: { result: Place }) => (
+  <View style={styles.winnerCard}>
+    <Text style={styles.winnerEmoji}>🎉</Text>
+    <Text style={styles.winnerText}>{result.name}</Text>
+  </View>
+);
+
+/* ---------- Styles ---------- */
+
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   pointer: {
     width: 0,
     height: 0,
@@ -186,23 +239,67 @@ const styles = StyleSheet.create({
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
     borderBottomColor: "#000",
-    zIndex: 10,
     marginBottom: -10,
+    zIndex: 10,
   },
-  button: {
-    marginTop: 30,
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    backgroundColor: "#007bff",
-    borderRadius: 20,
-  },
-  buttonText: { color: "#fff", fontWeight: "bold" },
-  result: { marginTop: 20, fontSize: 20, fontWeight: "bold" },
 
-  bottomCard: {
+  bottomSection: {
     position: "absolute",
-    bottom: 24,
+    bottom: 30,
     left: 16,
     right: 16,
+
+    zIndex: 5,
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+
+  winnerChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#f1f1f1",
+    borderRadius: 20,
+    marginRight: 8,
+  },
+
+  winnerCard: {
+    backgroundColor: "#fff",
+    padding: 24,
+    borderRadius: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+
+  winnerEmoji: {
+    fontSize: 36,
+  },
+
+  winnerText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 8,
+  },
+
+  button: {
+    bottom: 30,
+    paddingHorizontal: 36,
+    paddingVertical: 12,
+    backgroundColor: "#007bff",
+    borderRadius: 24,
+    zIndex: 20,
+    elevation: 20,
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
