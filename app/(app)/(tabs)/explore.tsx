@@ -1,6 +1,7 @@
 import { FilterPanel } from "@/components/explore/filterPanel";
 import { PlaceDetailCard } from "@/components/ui/Card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Loading } from "@/components/ui/Loading";
 import { PlaceMarker, SelectedPlaceMarker } from "@/components/ui/marker";
 import { Colors } from "@/constants/theme";
 import { useLocationContext } from "@/contexts/LocationContext";
@@ -119,7 +120,7 @@ export default function App() {
 
   const places = data ?? [];
 
-  const { location, loading } = useLocationContext();
+  const { location, loading, refetchLocation } = useLocationContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterValues, setFilterValues] = useState<Filters>({
@@ -141,6 +142,9 @@ export default function App() {
   // if (loading || !location) {
   //   return <View style={styles.container} />;
   // }
+  if (loading) {
+    return <Loading />;
+  }
 
   if (loading || !location) {
     return (
@@ -172,7 +176,10 @@ export default function App() {
           settings or try again.
         </Text>
 
-        <TouchableOpacity style={styles.primaryButton}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => refetchLocation()}
+        >
           <MaterialIcons name="refresh" size={20} color="#2D2926" />
           <Text style={styles.primaryButtonText}>Refresh Location</Text>
         </TouchableOpacity>

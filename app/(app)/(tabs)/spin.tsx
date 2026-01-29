@@ -1,305 +1,333 @@
-import { PlaceHistoryCard } from "@/components/ui/Card";
-import { useSession } from "@/contexts/AuthContext";
-import { fetchAllPlaces, fetchWheelHistory } from "@/services/placeService";
-import { Place } from "@/types/place";
-import { useQuery } from "@tanstack/react-query";
-import React, { useMemo, useRef, useState } from "react";
+import { MaterialIcons } from "@expo/vector-icons";
+import React, { useRef, useState } from "react";
 import {
   Animated,
-  Pressable,
+  Dimensions,
+  Easing,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { G, Path, Text as SvgText } from "react-native-svg";
 
+const { width } = Dimensions.get("window");
 const WHEEL_SIZE = 300;
-const SPIN_DURATION = 3000;
-const COLORS = ["#ff6666", "#66ccff", "#66ff99"];
 
-type Phase = "idle" | "spinning" | "result";
+const SEGMENTS = ["Pizza", "Sushi", "Burger", "Tacos", "Salad", "Pasta"];
+const COLORS = ["#f45925", "#ff8a65"];
+const ANGLE = 360 / SEGMENTS.length;
 
-export default function SvgWheelSpinner() {
-  const { user, isLoading } = useSession();
+const INITIAL_WINNERS = [
+  {
+    name: "Luigi's Pizzeria",
+    rating: 4.8,
+    price: "$$",
+    cuisine: "Italian",
+    image: "https://images.unsplash.com/photo-1601924582975-7e1a8c9a58a7",
+  },
+  {
+    name: "Sushi Master",
+    rating: 4.6,
+    price: "$$$",
+    cuisine: "Japanese",
+    image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351",
+  },
+];
 
-  const { data: wheelHistory } = useQuery<Place[]>({
-    queryKey: ["wheelHistory", user?.id],
-    queryFn: () => fetchWheelHistory(Number(user?.id)),
-    enabled: !!user?.id,
-  });
-
-  const { data: allPlaces } = useQuery<Place[]>({
-    queryKey: ["allPlaces"],
-    queryFn: fetchAllPlaces,
-  });
-
-  const places = allPlaces ?? [];
-
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [result, setResult] = useState<Place | null>(null);
-
+export default function SpinToEat() {
   const rotation = useRef(new Animated.Value(0)).current;
-  const currentAngle = useRef(0);
+  const uiTranslate = useRef(new Animated.Value(0)).current;
+  const uiOpacity = useRef(new Animated.Value(1)).current;
 
-  const bottomAnim = useRef(new Animated.Value(0)).current;
+  const [spinning, setSpinning] = useState(false);
+  const [recent, setRecent] = useState(INITIAL_WINNERS);
+  const [winner, setWinner] = useState<any | null>(null);
 
-  const segmentAngle = places.length ? 360 / places.length : 0;
+  const spin = () => {
+    if (spinning) return;
+    setSpinning(true);
 
-  const rotateInterpolate = rotation.interpolate({
+    // Hide UI
+    Animated.parallel([
+      Animated.timing(uiTranslate, {
+        toValue: 80,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(uiOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(startSpin);
+  };
+
+  const startSpin = () => {
+    const index = Math.floor(Math.random() * SEGMENTS.length);
+    const target = 360 * 5 + index * ANGLE + ANGLE / 2;
+
+    Animated.timing(rotation, {
+      toValue: target,
+      duration: 4000,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => finishSpin(index));
+  };
+
+  const finishSpin = (index: number) => {
+    const food = SEGMENTS[index];
+
+    const newWinner = {
+      name: `${food} House`,
+      rating: (4 + Math.random()).toFixed(1),
+      price: "$$",
+      cuisine: food,
+      image: "https://images.unsplash.com/photo-1550547660-d9450f859349",
+    };
+
+    setWinner(newWinner);
+
+    setRecent((prev) => [{ ...newWinner, isNew: true }, ...prev]);
+
+    Animated.parallel([
+      Animated.timing(uiTranslate, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(uiOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setSpinning(false));
+  };
+
+  const rotate = rotation.interpolate({
     inputRange: [0, 360],
     outputRange: ["0deg", "360deg"],
   });
 
-  const bottomTranslate = bottomAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 220],
-  });
-
-  const spinWheel = () => {
-    if (!places.length) return;
-
-    setPhase("spinning");
-    setResult(null);
-
-    Animated.timing(bottomAnim, {
-      toValue: 1,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-
-    const winningIndex = Math.floor(Math.random() * places.length);
-
-    const winningAngle =
-      360 - ((winningIndex + 1) * segmentAngle - segmentAngle / 2);
-
-    const finalAngle =
-      winningAngle +
-      360 * 6 +
-      currentAngle.current +
-      (360 - (currentAngle.current % 360));
-
-    currentAngle.current = finalAngle;
-
-    Animated.timing(rotation, {
-      toValue: finalAngle,
-      duration: SPIN_DURATION,
-      useNativeDriver: true,
-    }).start(() => {
-      setResult(places[winningIndex]);
-      setPhase("result");
-
-      Animated.timing(bottomAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    });
+  const arc = (start, end, r) => {
+    const rad = (d) => (Math.PI * d) / 180;
+    const x1 = r + r * Math.cos(rad(start));
+    const y1 = r + r * Math.sin(rad(start));
+    const x2 = r + r * Math.cos(rad(end));
+    const y2 = r + r * Math.sin(rad(end));
+    return `M${r},${r} L${x1},${y1} A${r},${r} 0 0 1 ${x2},${y2} Z`;
   };
-
-  const createArc = (start: number, end: number) => {
-    const r = WHEEL_SIZE / 2;
-    const x1 = r + r * Math.cos((Math.PI * start) / 180);
-    const y1 = r + r * Math.sin((Math.PI * start) / 180);
-    const x2 = r + r * Math.cos((Math.PI * end) / 180);
-    const y2 = r + r * Math.sin((Math.PI * end) / 180);
-    const large = end - start > 180 ? 1 : 0;
-
-    return `M${r},${r} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`;
-  };
-
-  const sliceColors = useMemo(
-    () => places.map((_, i) => COLORS[(i * 7 + 3) % COLORS.length]),
-    [places.length],
-  );
 
   return (
-    <View style={styles.container}>
-      {/* Pointer */}
-      <View style={styles.pointer} />
-
-      {/* Wheel */}
-      <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-        <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
-          <G transform={`rotate(-90 ${WHEEL_SIZE / 2} ${WHEEL_SIZE / 2})`}>
-            {places.map((place, i) => {
-              const start = i * segmentAngle;
-              const end = start + segmentAngle;
-
-              return (
-                <Path
-                  key={place.id}
-                  d={createArc(start, end)}
-                  fill={sliceColors[i]}
-                  stroke="#fff"
-                  strokeWidth={1.5}
-                />
-              );
-            })}
-
-            {places.map((place, i) => {
-              const start = i * segmentAngle;
-
-              return (
-                <SvgText
-                  key={`text-${place.id}`}
-                  x={WHEEL_SIZE / 2}
-                  y={WHEEL_SIZE / 2}
-                  fill="#000"
-                  fontSize={14}
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  alignmentBaseline="middle"
-                  transform={`rotate(${start + segmentAngle / 2 + 90} ${
-                    WHEEL_SIZE / 2
-                  } ${WHEEL_SIZE / 2}) translate(0,-${WHEEL_SIZE / 4})`}
-                >
-                  {place.name}
-                </SvgText>
-              );
-            })}
-          </G>
-        </Svg>
-      </Animated.View>
-
-      <Pressable style={styles.button} onPress={spinWheel}>
-        <Text style={styles.buttonText}>SPIN NOW</Text>
-      </Pressable>
-
-      {/* Bottom Section */}
-      <Animated.View
-        style={[
-          styles.bottomSection,
-          { transform: [{ translateY: bottomTranslate }] },
-        ]}
+    <SafeAreaView style={styles.safe}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <MaterialIcons name="arrow-back" size={24} />
+        <Text style={styles.headerTitle}>Spin to Eat</Text>
+        <MaterialIcons name="tune" size={24} />
+      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
       >
-        {phase === "idle" && <RecentWinners wheelHistory={wheelHistory} />}
-        {phase === "result" && result && <WinnerCard result={result} />}
-      </Animated.View>
+        {/* WHEEL (always visible) */}
+        <View style={styles.wheelArea}>
+          <View style={styles.pointer}>
+            <MaterialIcons name="arrow-drop-down" size={36} color="#f45925" />
+          </View>
 
-      {/* Spin Button */}
-    </View>
+          <Animated.View style={{ transform: [{ rotate }] }}>
+            <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
+              {SEGMENTS.map((s, i) => {
+                const start = i * ANGLE;
+                return (
+                  <G key={i}>
+                    <Path
+                      d={arc(start, start + ANGLE, WHEEL_SIZE / 2)}
+                      fill={COLORS[i % 2]}
+                    />
+                    <SvgText
+                      x={WHEEL_SIZE / 2}
+                      y={20}
+                      fill="#fff"
+                      fontSize="14"
+                      fontWeight="700"
+                      rotation={start + ANGLE / 2}
+                      origin={`${WHEEL_SIZE / 2},${WHEEL_SIZE / 2}`}
+                      textAnchor="middle"
+                    >
+                      {s}
+                    </SvgText>
+                  </G>
+                );
+              })}
+            </Svg>
+
+            <View style={styles.center}>
+              <MaterialIcons name="restaurant" size={32} color="#f45925" />
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* EVERYTHING ELSE */}
+        <Animated.View
+          style={[
+            styles.ui,
+            {
+              transform: [{ translateY: uiTranslate }],
+              opacity: uiOpacity,
+            },
+          ]}
+        >
+          <Text style={styles.title}>What are we eating?</Text>
+          <Text style={styles.subtitle}>
+            Spin the wheel to decide your destiny
+          </Text>
+
+          <TouchableOpacity
+            style={styles.spinButton}
+            onPress={spin}
+            disabled={spinning}
+          >
+            <Text style={styles.spinText}>
+              {spinning ? "SPINNING…" : "SPIN NOW"}
+            </Text>
+          </TouchableOpacity>
+
+          {winner && (
+            <>
+              <Text style={styles.section}>🎉 Winner</Text>
+
+              <View style={[styles.card, styles.winnerCard]}>
+                <Image source={{ uri: winner.image }} style={styles.image} />
+
+                <View style={styles.rating}>
+                  <MaterialIcons name="star" size={14} color="#facc15" />
+                  <Text>{winner.rating}</Text>
+                </View>
+
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardTitle}>{winner.name}</Text>
+                  <Text style={styles.cardSub}>
+                    {winner.price} • {winner.cuisine}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* RECENT WINNERS */}
+          <Text style={styles.section}>Recent Winners</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
+            {recent.map((r, i) => (
+              <View key={i} style={[styles.card, r.isNew && styles.newWinner]}>
+                <Image source={{ uri: r.image }} style={styles.image} />
+                <View style={styles.rating}>
+                  <MaterialIcons name="star" size={14} color="#facc15" />
+                  <Text>{r.rating}</Text>
+                </View>
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardTitle}>{r.name}</Text>
+                  <Text style={styles.cardSub}>
+                    {r.price} • {r.cuisine}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </Animated.View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-/* ---------- Subcomponents ---------- */
-
-const RecentWinners = ({ wheelHistory }: { wheelHistory?: Place[] }) => (
-  <View>
-    <Text style={styles.sectionTitle}>Recent Winners</Text>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-      {/* {["Sushi", "Burger", "Tacos", "Steak"].map((item, i) => (
-        <View key={i} style={styles.winnerChip}>
-          <Text>{item}</Text>
-        </View>
-      ))} */}
-
-      {wheelHistory?.map((place, index) => {
-        return (
-          <PlaceHistoryCard
-            key={index}
-            place={{
-              name: place.place.name,
-              description: "Hey",
-              rating: 4.8,
-              // image: "https://example.com/sushi.jpg",
-              image:
-                place.place.images.find((img) => img.isPrimary)?.url ??
-                place.place.images[0]?.url,
-            }}
-          />
-        );
-      })}
-    </ScrollView>
-  </View>
-);
-
-const WinnerCard = ({ result }: { result: Place }) => (
-  <View style={styles.winnerCard}>
-    <Text style={styles.winnerEmoji}>🎉</Text>
-    <Text style={styles.winnerText}>{result.name}</Text>
-  </View>
-);
-
-/* ---------- Styles ---------- */
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  safe: { flex: 1, backgroundColor: "#f8f6f5" },
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 16,
+  },
+  headerTitle: { fontWeight: "700", fontSize: 18 },
+
+  wheelArea: {
     alignItems: "center",
-    justifyContent: "center",
-  },
-
-  pointer: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderBottomWidth: 20,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderBottomColor: "#000",
-    marginBottom: -10,
-    zIndex: 10,
-  },
-
-  bottomSection: {
-    position: "absolute",
-    bottom: 30,
-    left: 16,
-    right: 16,
-
-    zIndex: 5,
-  },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-
-  winnerChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#f1f1f1",
-    borderRadius: 20,
-    marginRight: 8,
-  },
-
-  winnerCard: {
-    backgroundColor: "#fff",
-    padding: 24,
-    borderRadius: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-
-  winnerEmoji: {
-    fontSize: 36,
-  },
-
-  winnerText: {
-    fontSize: 20,
-    fontWeight: "bold",
     marginTop: 8,
   },
+  pointer: {
+    position: "absolute",
+    top: -12,
+    zIndex: 10,
+  },
+  center: {
+    position: "absolute",
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    left: WHEEL_SIZE / 2 - 35,
+    top: WHEEL_SIZE / 2 - 35,
+  },
 
-  button: {
-    bottom: 30,
+  ui: {
+    alignItems: "center",
+    paddingTop: 16,
+  },
+
+  title: { fontSize: 28, fontWeight: "800" },
+  subtitle: { color: "#6b7280", marginBottom: 20 },
+
+  spinButton: {
+    backgroundColor: "#f45925",
     paddingHorizontal: 36,
-    paddingVertical: 12,
-    backgroundColor: "#007bff",
-    borderRadius: 24,
-    zIndex: 20,
-    elevation: 20,
+    paddingVertical: 16,
+    borderRadius: 999,
+    marginBottom: 24,
+  },
+  spinText: { color: "#fff", fontWeight: "900", fontSize: 16 },
+
+  section: {
+    alignSelf: "flex-start",
+    marginLeft: 16,
+    marginBottom: 12,
+    fontWeight: "700",
+    fontSize: 18,
   },
 
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  card: {
+    width: 200,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    marginLeft: 16,
+    overflow: "hidden",
   },
+  newWinner: {
+    borderWidth: 2,
+    borderColor: "#f45925",
+    transform: [{ scale: 1.05 }],
+  },
+  image: { width: "100%", height: 120 },
+  rating: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  cardBody: { padding: 10 },
+  cardTitle: { fontWeight: "700" },
+  cardSub: { color: "#6b7280", fontSize: 12 },
 });
