@@ -1,4 +1,8 @@
+import { useSession } from "@/contexts/AuthContext";
+import { fetchAllPlaces, fetchWheelHistory } from "@/services/placeService";
+import { Place } from "@/types/place";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -39,6 +43,19 @@ const INITIAL_WINNERS = [
 ];
 
 export default function SpinToEat() {
+  const { user, isLoading } = useSession();
+  const { data: wheelHistory } = useQuery<Place[]>({
+    queryKey: ["wheelHistory", user?.id],
+    queryFn: () => fetchWheelHistory(Number(user?.id)),
+    enabled: !!user?.id,
+  });
+
+  const { data: allPlaces } = useQuery<Place[]>({
+    queryKey: ["allPlaces"],
+    queryFn: fetchAllPlaces,
+  });
+  const places = allPlaces ?? [];
+
   const rotation = useRef(new Animated.Value(0)).current;
   const uiTranslate = useRef(new Animated.Value(0)).current;
   const uiOpacity = useRef(new Animated.Value(1)).current;
@@ -80,18 +97,6 @@ export default function SpinToEat() {
 
   const finishSpin = (index: number) => {
     const food = SEGMENTS[index];
-
-    const newWinner = {
-      name: `${food} House`,
-      rating: (4 + Math.random()).toFixed(1),
-      price: "$$",
-      cuisine: food,
-      image: "https://images.unsplash.com/photo-1550547660-d9450f859349",
-    };
-
-    setWinner(newWinner);
-
-    setRecent((prev) => [{ ...newWinner, isNew: true }, ...prev]);
 
     Animated.parallel([
       Animated.timing(uiTranslate, {
@@ -198,25 +203,49 @@ export default function SpinToEat() {
           </TouchableOpacity>
 
           {winner && (
-            <>
-              <Text style={styles.section}>🎉 Winner</Text>
+            <View style={styles.winnerWrapper}>
+              <Text style={styles.section}>Winner 🎉</Text>
+              <View style={styles.winnerCard}>
+                {/* Handle */}
 
-              <View style={[styles.card, styles.winnerCard]}>
-                <Image source={{ uri: winner.image }} style={styles.image} />
+                {/* Content */}
+                <View style={styles.row}>
+                  <View style={styles.imageWrapper}>
+                    <Image
+                      source={{ uri: winner.image }}
+                      style={styles.winnerImage}
+                    />
+                  </View>
 
-                <View style={styles.rating}>
-                  <MaterialIcons name="star" size={14} color="#facc15" />
-                  <Text>{winner.rating}</Text>
+                  <View style={styles.details}>
+                    <Text style={styles.winner_title} numberOfLines={1}>
+                      {winner.name}
+                    </Text>
+
+                    <Text style={styles.winner_subtitle} numberOfLines={1}>
+                      {winner.price} • {winner.cuisine}
+                    </Text>
+
+                    <View style={styles.meta}>
+                      <Text style={styles.rating}>⭐ {winner.rating}</Text>
+                      <Text style={styles.dot}>•</Text>
+                      <Text style={styles.status}>Open</Text>
+                    </View>
+                  </View>
                 </View>
 
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardTitle}>{winner.name}</Text>
-                  <Text style={styles.cardSub}>
-                    {winner.price} • {winner.cuisine}
-                  </Text>
+                {/* Actions */}
+                <View style={styles.actions}>
+                  <View style={styles.primaryBtn}>
+                    <Text style={styles.primaryText}>Navigate</Text>
+                  </View>
+
+                  <View style={styles.secondaryBtn}>
+                    <Text style={styles.secondaryText}>View Details</Text>
+                  </View>
                 </View>
               </View>
-            </>
+            </View>
           )}
 
           {/* RECENT WINNERS */}
@@ -327,7 +356,115 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+
   cardBody: { padding: 10 },
   cardTitle: { fontWeight: "700" },
   cardSub: { color: "#6b7280", fontSize: 12 },
+
+  winnerWrapper: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+
+  winnerTitle: {
+    fontWeight: "800",
+    fontSize: 20,
+    marginBottom: 16,
+  },
+
+  winnerCard: {
+    width: width * 0.9, // large & centered
+    borderRadius: 32,
+    backgroundColor: "#fff",
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+
+  handleWrapper: {
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  handle: {
+    width: 48,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#E0E0E0",
+  },
+
+  row: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  imageWrapper: {
+    width: 96,
+    height: 96,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#DDD",
+  },
+  winnerImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  details: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  winner_title: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  winner_subtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+  meta: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 6,
+  },
+  winner_rating: {
+    fontWeight: "600",
+  },
+  dot: {
+    color: "#AAA",
+  },
+  status: {
+    fontWeight: "600",
+    color: "green",
+  },
+
+  actions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
+  },
+  primaryBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 24,
+    backgroundColor: "#FF8C00",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  secondaryBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 24,
+    backgroundColor: "#F2F2F2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryText: {
+    fontWeight: "700",
+  },
 });
