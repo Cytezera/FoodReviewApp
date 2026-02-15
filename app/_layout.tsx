@@ -5,6 +5,7 @@ import { LocationProvider } from "@/contexts/LocationContext";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+// If using Expo Router, import your CSS file in the app/_layout.tsx file
 
 // export const unstable_settings = {
 //   anchor: '(tabs)',
