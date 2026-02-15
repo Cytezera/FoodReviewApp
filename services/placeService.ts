@@ -57,3 +57,18 @@ export const updateWheelHistory = async (userId: number, placeId: number) => {
     };
   }
 };
+
+export const getPlaceById = async (placeId: number) => {
+  const res = await fetch(`${API_URL}/api/places/${placeId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error("Unable to Fetch Restaurant Details");
+  }
+  return data;
+};

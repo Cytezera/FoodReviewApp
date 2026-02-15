@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useLocationContext } from "@/contexts/LocationContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { router } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -224,7 +225,11 @@ export default function DiscoverScreen() {
             contentContainerStyle={styles.horizontalList}
           >
             {trendingRestaurants.map((restaurant) => (
-              <Pressable key={restaurant.id} style={styles.trendingCard}>
+              <Pressable
+                key={restaurant.id}
+                style={styles.trendingCard}
+                onPress={() => router.push("place-details")}
+              >
                 <View style={styles.trendingImageContainer}>
                   <Image
                     source={{ uri: restaurant.image }}

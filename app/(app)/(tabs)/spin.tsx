@@ -25,22 +25,7 @@ const SEGMENTS = ["Pizza", "Sushi", "Burger", "Tacos", "Salad", "Pasta"];
 const COLORS = ["#f45925", "#ff8a65"];
 const ANGLE = 360 / SEGMENTS.length;
 
-const INITIAL_WINNERS = [
-  {
-    name: "Luigi's Pizzeria",
-    rating: 4.8,
-    price: "$$",
-    cuisine: "Italian",
-    image: "https://images.unsplash.com/photo-1601924582975-7e1a8c9a58a7",
-  },
-  {
-    name: "Sushi Master",
-    rating: 4.6,
-    price: "$$$",
-    cuisine: "Japanese",
-    image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351",
-  },
-];
+const INITIAL_WINNERS: Place[] = [];
 
 export default function SpinToEat() {
   const { user, isLoading } = useSession();
@@ -56,13 +41,15 @@ export default function SpinToEat() {
   });
   const places = allPlaces ?? [];
 
+  const segmentAngle = 360 / places.length;
+  const currentAngle = useRef(0);
   const rotation = useRef(new Animated.Value(0)).current;
   const uiTranslate = useRef(new Animated.Value(0)).current;
   const uiOpacity = useRef(new Animated.Value(1)).current;
 
   const [spinning, setSpinning] = useState(false);
   const [recent, setRecent] = useState(INITIAL_WINNERS);
-  const [winner, setWinner] = useState<any | null>(null);
+  const [winner, setWinner] = useState<Place | null>(null);
 
   const spin = () => {
     if (spinning) return;
@@ -84,15 +71,30 @@ export default function SpinToEat() {
   };
 
   const startSpin = () => {
-    const index = Math.floor(Math.random() * SEGMENTS.length);
-    const target = 360 * 5 + index * ANGLE + ANGLE / 2;
+    // const index = Math.floor(Math.random() * SEGMENTS.length);
+    // const target = 360 * 5 + index * ANGLE + ANGLE / 2;
+
+    const winningIndex = Math.floor(Math.random() * places.length);
+
+    const winningAngle =
+      360 - ((winningIndex + 1) * segmentAngle - segmentAngle / 2);
+
+    const finalAngle =
+      winningAngle +
+      360 * 6 +
+      currentAngle.current +
+      (360 - (currentAngle.current % 360));
+
+    currentAngle.current = finalAngle;
+
+    setWinner(places[winningIndex]);
 
     Animated.timing(rotation, {
-      toValue: target,
+      toValue: finalAngle,
       duration: 4000,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start(() => finishSpin(index));
+    }).start(() => finishSpin(winningIndex));
   };
 
   const finishSpin = (index: number) => {
@@ -212,7 +214,7 @@ export default function SpinToEat() {
                 <View style={styles.row}>
                   <View style={styles.imageWrapper}>
                     <Image
-                      source={{ uri: winner.image }}
+                      source={{ uri: winner.images?.[0]?.url }}
                       style={styles.winnerImage}
                     />
                   </View>
@@ -223,13 +225,13 @@ export default function SpinToEat() {
                     </Text>
 
                     <Text style={styles.winner_subtitle} numberOfLines={1}>
-                      {winner.price} • {winner.cuisine}
+                      {winner.priceRange} • {winner.address}
                     </Text>
 
                     <View style={styles.meta}>
-                      <Text style={styles.rating}>⭐ {winner.rating}</Text>
+                      <Text style={styles.winner_rating}>⭐ {winner.rating}</Text>
                       <Text style={styles.dot}>•</Text>
-                      <Text style={styles.status}>Open</Text>
+                      <Text style={styles.status}>{winner.status}</Text>
                     </View>
                   </View>
                 </View>
@@ -256,8 +258,11 @@ export default function SpinToEat() {
             contentContainerStyle={{ paddingBottom: 24 }}
           >
             {recent.map((r, i) => (
-              <View key={i} style={[styles.card, r.isNew && styles.newWinner]}>
-                <Image source={{ uri: r.image }} style={styles.image} />
+              <View key={i} style={styles.card}>
+                <Image
+                  source={{ uri: r.images?.[0]?.url }}
+                  style={styles.image}
+                />
                 <View style={styles.rating}>
                   <MaterialIcons name="star" size={14} color="#facc15" />
                   <Text>{r.rating}</Text>
@@ -265,7 +270,7 @@ export default function SpinToEat() {
                 <View style={styles.cardBody}>
                   <Text style={styles.cardTitle}>{r.name}</Text>
                   <Text style={styles.cardSub}>
-                    {r.price} • {r.cuisine}
+                    {r.priceRange} • {r.status}
                   </Text>
                 </View>
               </View>
@@ -339,11 +344,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginLeft: 16,
     overflow: "hidden",
-  },
-  newWinner: {
-    borderWidth: 2,
-    borderColor: "#f45925",
-    transform: [{ scale: 1.05 }],
   },
   image: { width: "100%", height: 120 },
   rating: {
