@@ -1,17 +1,19 @@
 import React from "react";
 import {
-    ImageBackground,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+// import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 export default function RestaurantDetailsScreen() {
   return (
+    // <SafeAreaView>
     <View style={styles.container}>
       {/* Top Nav */}
       <View style={styles.navbar}>
@@ -116,6 +118,7 @@ export default function RestaurantDetailsScreen() {
         </TouchableOpacity>
       </View>
     </View>
+    // </SafeAreaView>
   );
 }
 
