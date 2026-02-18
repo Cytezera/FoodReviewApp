@@ -40,6 +40,7 @@ export default function SpinToEat() {
     queryFn: fetchAllPlaces,
   });
   const places = allPlaces ?? [];
+  console.log(places);
 
   const segmentAngle = 360 / places.length;
   const currentAngle = useRef(0);
@@ -229,7 +230,9 @@ export default function SpinToEat() {
                     </Text>
 
                     <View style={styles.meta}>
-                      <Text style={styles.winner_rating}>⭐ {winner.rating}</Text>
+                      <Text style={styles.winner_rating}>
+                        ⭐ {winner.rating}
+                      </Text>
                       <Text style={styles.dot}>•</Text>
                       <Text style={styles.status}>{winner.status}</Text>
                     </View>

@@ -59,7 +59,7 @@ export const updateWheelHistory = async (userId: number, placeId: number) => {
 };
 
 export const getPlaceById = async (placeId: number) => {
-  const res = await fetch(`${API_URL}/api/places/${placeId}`, {
+  const res = await fetch(`${API_URL}/api/places/getPlaceById/${placeId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
