@@ -17,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const trendingRestaurants = [
   {
-    id: 1,
+    id: 5,
     name: "Burger Joint",
     cuisine: "American",
     price: "$$",
@@ -228,7 +228,7 @@ export default function DiscoverScreen() {
               <Pressable
                 key={restaurant.id}
                 style={styles.trendingCard}
-                onPress={() => router.push("place-details")}
+                onPress={() => router.push(`/place-details/${restaurant.id}`)}
               >
                 <View style={styles.trendingImageContainer}>
                   <Image

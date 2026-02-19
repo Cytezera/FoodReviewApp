@@ -1,17 +1,24 @@
+
 import React from "react";
 import {
-  ImageBackground,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ImageBackground,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 // import { SafeAreaView } from "react-native-safe-area-context";
+import { useGetPlaceById } from "@/services/hooks/places";
+import { useLocalSearchParams } from "expo-router";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 export default function RestaurantDetailsScreen() {
+  const { id: placeId } = useLocalSearchParams()
+  const { data: place, isLoading: isLoadingPlace } = useGetPlaceById(placeId)
+  console.log(place)
+
   return (
     // <SafeAreaView>
     <View style={styles.container}>
