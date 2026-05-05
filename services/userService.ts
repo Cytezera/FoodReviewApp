@@ -1,4 +1,4 @@
-
+import { BookmarkResponse } from '@/types/place'
 import { UpdateUser } from '@/types/user'
 const API_URL = process.env.EXPO_PUBLIC_API_URL
 
@@ -27,4 +27,22 @@ export async function updateUser (user:UpdateUser ){
         })
     }
 
+}
+
+export async function bookmarkPlace(
+    placeId: number,
+    token: string,
+): Promise<BookmarkResponse> {
+    const res = await fetch(`${API_URL}/api/users/bookmarks`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token,
+        },
+        body: JSON.stringify({ placeId }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) throw new Error(data?.message ?? 'Bookmarking place failed')
+    return data
 }
