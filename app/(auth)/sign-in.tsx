@@ -2,10 +2,9 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/contexts/AuthContext";
 import { LoginCredential } from "@/types/user";
-import * as Google from "expo-auth-session/build/providers/Google";
-import * as WebBrowser from "expo-web-browser";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -16,15 +15,10 @@ import {
   View,
 } from "react-native";
 
-WebBrowser.maybeCompleteAuthSession();
+const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
-const googleClientIds = {
-  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "missing-google-android-client-id",
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-};
-
-const isGoogleConfigured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
+const isGoogleConfigured = Boolean(googleWebClientId);
 
 const oauthProviders = [
   { provider: "google", label: "Continue with Google", icon: "G" },
@@ -36,34 +30,18 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
-  const handledGoogleTokenRef = useRef<string | null>(null);
   const { signIn, signInWithOAuth } = useSession();
-  const [googleRequest, googleResponse, promptGoogleSignIn] = Google.useIdTokenAuthRequest(googleClientIds);
 
   useEffect(() => {
-    const completeGoogleLogin = async () => {
-      if (googleResponse?.type !== "success") return;
+    if (!googleWebClientId) return;
 
-      const idToken = googleResponse.params.id_token || googleResponse.authentication?.idToken;
-      if (!idToken) {
-        setError("Google did not return an ID token. Please try again.");
-        setIsOAuthLoading(false);
-        return;
-      }
-
-      if (handledGoogleTokenRef.current === idToken) return;
-      handledGoogleTokenRef.current = idToken;
-
-      const result = await signInWithOAuth("google", idToken);
-      setIsOAuthLoading(false);
-
-      if (!result.success) {
-        setError(result.error || "Google login failed. Please try again.");
-      }
-    };
-
-    completeGoogleLogin();
-  }, [googleResponse, signInWithOAuth]);
+    GoogleSignin.configure({
+      webClientId: googleWebClientId,
+      iosClientId: googleIosClientId,
+      offlineAccess: false,
+      scopes: ["profile", "email"],
+    });
+  }, []);
 
   const handleLogin = async () => {
     setError("");
@@ -86,15 +64,40 @@ export default function SignIn() {
 
     if (provider === "google") {
       if (!isGoogleConfigured) {
-        setError("Google login needs EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID in your app env.");
+        setError("Google login needs EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in your app env.");
         return;
       }
 
       setIsOAuthLoading(true);
-      const result = await promptGoogleSignIn();
 
-      if (result.type !== "success") {
+      try {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        const googleResult = await GoogleSignin.signIn();
+
+        if (googleResult.type !== "success") {
+          setIsOAuthLoading(false);
+          return;
+        }
+
+        const idToken = googleResult.data.idToken;
+        if (!idToken) {
+          setError("Google did not return an ID token. Check EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.");
+          setIsOAuthLoading(false);
+          return;
+        }
+
+        const result = await signInWithOAuth("google", idToken, googleResult.data.user.name ?? undefined);
         setIsOAuthLoading(false);
+
+        if (!result.success) {
+          setError(result.error || "Google login failed. Please try again.");
+        }
+      } catch (error: any) {
+        setIsOAuthLoading(false);
+
+        if (error?.code === statusCodes.SIGN_IN_CANCELLED) return;
+
+        setError(error?.message || "Google login failed. Please try again.");
       }
       return;
     }
@@ -119,7 +122,7 @@ export default function SignIn() {
 
         <View style={styles.oauthGroup}>
           {oauthProviders.map((provider) => {
-            const disabled = isOAuthLoading || (provider.provider === "google" && !googleRequest);
+            const disabled = isOAuthLoading || (provider.provider === "google" && !isGoogleConfigured);
 
             return (
               <Pressable
