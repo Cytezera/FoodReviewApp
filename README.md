@@ -10,7 +10,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Configure the API URL
+
+   Create `.env.local` with a backend URL reachable from the device running the app:
+
+   ```bash
+   EXPO_PUBLIC_API_URL=http://<your-lan-ip>:9000
+   ```
+
+   Notes:
+
+   - Android emulator: use `http://10.0.2.2:9000` for a backend running on your computer.
+   - Expo Go on a physical device: use your computer's LAN IP, not `localhost`, and make sure the backend listens on `0.0.0.0`.
+
+3. Start the app
 
    ```bash
    npx expo start
