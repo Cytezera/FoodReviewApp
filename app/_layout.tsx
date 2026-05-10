@@ -1,5 +1,6 @@
-import { queryClient } from "@/app/providers/QueryClient";
+import { queryClient } from "@/lib/queryClient";
 import { SplashScreenController } from "@/components/splash";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { SessionProvider, useSession } from "@/contexts/AuthContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -11,10 +12,12 @@ import * as SplashScreen from "expo-splash-screen";
 //   anchor: '(tabs)',
 // };
 
-SplashScreen.setOptions({
-  duration: 1000,
-  fade: true,
-});
+if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) {
+  SplashScreen.setOptions({
+    duration: 1000,
+    fade: true,
+  });
+}
 
 function RootNavigator() {
   const { session } = useSession();
