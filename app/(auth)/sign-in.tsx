@@ -1,5 +1,5 @@
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { useSession } from "@/contexts/AuthContext";
 import { LoginCredential } from "@/types/user";
 import { router } from "expo-router";
@@ -42,6 +42,7 @@ export default function SignIn() {
   };
 
   const handleOAuthPress = (provider: string) => {
+    console.log("hey")
     Alert.alert(
       `${provider} sign in`,
       "OAuth UI is ready. Connect this button to the provider flow when the backend/auth config is available."
