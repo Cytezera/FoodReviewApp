@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/contexts/AuthContext";
 import { LoginCredential } from "@/types/user";
-import * as Google from "expo-auth-session/providers/google";
+import * as Google from "expo-auth-session/build/providers/Google";
 import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
