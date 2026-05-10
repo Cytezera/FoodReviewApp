@@ -2,8 +2,10 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/contexts/AuthContext";
 import { LoginCredential } from "@/types/user";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,16 +16,54 @@ import {
   View,
 } from "react-native";
 
+WebBrowser.maybeCompleteAuthSession();
+
+const googleClientIds = {
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "missing-google-android-client-id",
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+};
+
+const isGoogleConfigured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
+
 const oauthProviders = [
-  { label: "Continue with Google", icon: "G" },
-  { label: "Continue with Apple", icon: "" },
-];
+  { provider: "google", label: "Continue with Google", icon: "G" },
+  { provider: "apple", label: "Continue with Apple", icon: "" },
+] as const;
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { signIn } = useSession();
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+  const handledGoogleTokenRef = useRef<string | null>(null);
+  const { signIn, signInWithOAuth } = useSession();
+  const [googleRequest, googleResponse, promptGoogleSignIn] = Google.useIdTokenAuthRequest(googleClientIds);
+
+  useEffect(() => {
+    const completeGoogleLogin = async () => {
+      if (googleResponse?.type !== "success") return;
+
+      const idToken = googleResponse.params.id_token || googleResponse.authentication?.idToken;
+      if (!idToken) {
+        setError("Google did not return an ID token. Please try again.");
+        setIsOAuthLoading(false);
+        return;
+      }
+
+      if (handledGoogleTokenRef.current === idToken) return;
+      handledGoogleTokenRef.current = idToken;
+
+      const result = await signInWithOAuth("google", idToken);
+      setIsOAuthLoading(false);
+
+      if (!result.success) {
+        setError(result.error || "Google login failed. Please try again.");
+      }
+    };
+
+    completeGoogleLogin();
+  }, [googleResponse, signInWithOAuth]);
 
   const handleLogin = async () => {
     setError("");
@@ -41,10 +81,27 @@ export default function SignIn() {
     }
   };
 
-  const handleOAuthPress = (provider: string) => {
+  const handleOAuthPress = async (provider: "google" | "apple") => {
+    setError("");
+
+    if (provider === "google") {
+      if (!isGoogleConfigured) {
+        setError("Google login needs EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID in your app env.");
+        return;
+      }
+
+      setIsOAuthLoading(true);
+      const result = await promptGoogleSignIn();
+
+      if (result.type !== "success") {
+        setIsOAuthLoading(false);
+      }
+      return;
+    }
+
     Alert.alert(
-      `${provider} sign in`,
-      "OAuth UI is ready. Connect this button to the provider flow when the backend/auth config is available."
+      "Apple sign in",
+      "Apple OAuth needs expo-apple-authentication and the Apple client ID before this button can be enabled."
     );
   };
 
@@ -61,23 +118,33 @@ export default function SignIn() {
         </View>
 
         <View style={styles.oauthGroup}>
-          {oauthProviders.map((provider) => (
-            <Pressable
-              key={provider.label}
-              accessibilityRole="button"
-              accessibilityLabel={provider.label}
-              onPress={() => handleOAuthPress(provider.label.replace("Continue with ", ""))}
-              style={({ pressed }) => [
-                styles.oauthButton,
-                pressed && styles.oauthButtonPressed,
-              ]}
-            >
-              <View style={styles.oauthIcon}>
-                <Text style={styles.oauthIconText}>{provider.icon}</Text>
-              </View>
-              <Text style={styles.oauthButtonText}>{provider.label}</Text>
-            </Pressable>
-          ))}
+          {oauthProviders.map((provider) => {
+            const disabled = isOAuthLoading || (provider.provider === "google" && !googleRequest);
+
+            return (
+              <Pressable
+                key={provider.label}
+                accessibilityRole="button"
+                accessibilityLabel={provider.label}
+                disabled={disabled}
+                onPress={() => handleOAuthPress(provider.provider)}
+                style={({ pressed }) => [
+                  styles.oauthButton,
+                  pressed && styles.oauthButtonPressed,
+                  disabled && styles.oauthButtonDisabled,
+                ]}
+              >
+                <View style={styles.oauthIcon}>
+                  <Text style={styles.oauthIconText}>{provider.icon}</Text>
+                </View>
+                <Text style={styles.oauthButtonText}>
+                  {isOAuthLoading && provider.provider === "google"
+                    ? "Connecting to Google..."
+                    : provider.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <View style={styles.dividerRow}>
@@ -176,6 +243,9 @@ const styles = StyleSheet.create({
   oauthButtonPressed: {
     backgroundColor: "#f7f3ee",
     transform: [{ scale: 0.99 }],
+  },
+  oauthButtonDisabled: {
+    opacity: 0.5,
   },
   oauthIcon: {
     alignItems: "center",

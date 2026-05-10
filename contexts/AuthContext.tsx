@@ -1,4 +1,4 @@
-import { fetchUserJWT, loginUser } from '@/services/authService';
+import { fetchUserJWT, loginUser, loginWithOAuth, OAuthProvider } from '@/services/authService';
 import { LoginCredential, User } from '@/types/user';
 import { useQuery } from '@tanstack/react-query';
 import { createContext, useContext, type PropsWithChildren } from 'react';
@@ -9,12 +9,16 @@ import { useStorageState } from '@/hooks/useStorageState';
 
 const AuthContext = createContext<{
   signIn: (loginCredential: LoginCredential) => Promise<any>;
+  signInWithOAuth: (provider: OAuthProvider, idToken: string, name?: string) => Promise<any>;
   signOut: () => void;
   session?: string | null;
   user? : User | null;
   isLoading: boolean;
 }>({
   signIn: (loginCredential: LoginCredential ) => {
+    return Promise.resolve(null)
+  },
+  signInWithOAuth: () => {
     return Promise.resolve(null)
   },
   signOut: () => null,
@@ -64,6 +68,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
             setSession(result.data.token)
           }
           return result 
+        },
+        signInWithOAuth: async (provider, idToken, name) => {
+          const result = await loginWithOAuth({ provider, idToken, name })
+          if (result.success){
+            setSession(result.data.token)
+          }
+          return result
         },
         signOut: () => setSession(null)
       }}
