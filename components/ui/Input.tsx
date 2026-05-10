@@ -1,6 +1,20 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  TextStyle,
+  View,
+} from "react-native";
 
-export function Input({ label, style, inputStyle, ...props }) {
+type InputProps = TextInputProps & {
+  label?: string;
+  style?: StyleProp<TextStyle>;
+  inputStyle?: StyleProp<TextStyle>;
+};
+
+export function Input({ label, style, inputStyle, ...props }: InputProps) {
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
