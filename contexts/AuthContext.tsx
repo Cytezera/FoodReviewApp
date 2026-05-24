@@ -1,5 +1,5 @@
-import { fetchUserJWT, loginUser } from '@/services/authService';
-import { LoginCredential, User } from '@/types/user';
+import { fetchUserJWT, loginUser, loginWithhGoogleOAuthCode } from '@/services/authService';
+import { LoginCredential, LoginCredentialGoogleAuth, User } from '@/types/user';
 import { useQuery } from '@tanstack/react-query';
 import { createContext, useContext, type PropsWithChildren } from 'react';
 
@@ -10,11 +10,15 @@ import { useStorageState } from '@/hooks/useStorageState';
 const AuthContext = createContext<{
   signIn: (loginCredential: LoginCredential) => Promise<any>;
   signOut: () => void;
+  signInWithGoogle: ({ code, redirectUri, codeVerifier }: LoginCredentialGoogleAuth) => Promise<any>;
   session?: string | null;
   user? : User | null;
   isLoading: boolean;
 }>({
   signIn: (loginCredential: LoginCredential ) => {
+    return Promise.resolve(null)
+  },
+  signInWithGoogle: async ({ code, redirectUri, codeVerifier}) => {
     return Promise.resolve(null)
   },
   signOut: () => null,
@@ -64,6 +68,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
             setSession(result.data.token)
           }
           return result 
+        },
+        signInWithGoogle: async ({ code, redirectUri, codeVerifier}) => { 
+          const result = await loginWithhGoogleOAuthCode({ code, redirectUri, codeVerfier: codeVerifier})
+          if(result.success){
+            setSession(result.data.token)
+          }
         },
         signOut: () => setSession(null)
       }}

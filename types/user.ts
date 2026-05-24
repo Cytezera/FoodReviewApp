@@ -15,6 +15,12 @@ export type LoginCredential = {
     password: string;
 }
 
+export type LoginCredentialGoogleAuth = { 
+    code: string;
+    redirectUri: string;
+    codeVerifier: string;
+}
+
 export type LoginResponse = {
     token: string;
     refreshToken?: string; 

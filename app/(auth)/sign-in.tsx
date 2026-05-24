@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useSession } from "@/contexts/AuthContext";
+import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
 import { LoginCredential } from "@/types/user";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -19,11 +20,29 @@ const oauthProviders = [
   { label: "Continue with Apple", icon: "" },
 ];
 
+
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { signIn } = useSession();
+  const { request , promptAsync, redirectUri } = useGoogleOAuth();
+  const { signIn, signInWithGoogle } = useSession();
+
+  const handleGoogleOAuth = async () => { 
+    const result = await promptAsync();
+    if (result.type !== "success") return
+
+    const oauthResult = await signInWithGoogle({
+      code: result.params.code,
+      redirectUri: redirectUri,
+      codeVerifier: result.params.codeVerifier
+    });
+
+    if (!oauthResult.success){ 
+      setError("Google sign in failed. Please try again.")
+    }
+  }
+
 
   const handleLogin = async () => {
     setError("");
